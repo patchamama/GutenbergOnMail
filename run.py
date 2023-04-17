@@ -1,6 +1,9 @@
 
 import gspread
 from google.oauth2.service_account import Credentials
+import os
+import urllib.request
+
 
 SCOPE = [
     "https://www.googleapis.com/auth/spreadsheets",
@@ -60,8 +63,28 @@ def get_epub_url(data, id):
     record = get_filter_data(data, [{"Text#": int(id)}])
     if len(record) > 0:
         ##print_data(record)
-        return "https://www.gutenberg.org/ebooks/"+str(record[0]["Text#"])
+        return f"https://www.gutenberg.org/ebooks/{record[0]['Text#']}"
     else:
+        return None
+
+def download_epub(id, with_images=False, format="epub"):
+    """
+    Download a epub file from the Gutenberg website with one number (id) = Text#
+    """
+    #https://www.gutenberg.org/ebooks/62187.epub.images
+    #https://www.gutenberg.org/ebooks/62187.epub3.images
+    #https://www.gutenberg.org/ebooks/62187.epub.noimages
+    urlimage = "images" if (with_images) else "noimages"
+    url_ebook = f"https://www.gutenberg.org/ebooks/{id}.{format}.{urlimage}"
+    print(url_ebook)
+    try:
+        web_file = urllib.request.urlopen(url_ebook).read()
+        file_name = f"{id}.epub"
+        epub_local=open(file_name, 'wb')
+        epub_local.write(web_file)
+        epub_local.close()
+        return file_name
+    except:
         return None
 
 
@@ -77,3 +100,5 @@ print_data(data)
 url_ebook = get_epub_url(data, 62187)
 if url_ebook:
     print(url_ebook)
+    download_epub(62187)
+
