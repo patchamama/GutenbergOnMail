@@ -67,7 +67,7 @@ def get_epub_url(data, id):
     else:
         return None
 
-def download_epub(id, with_images=False, format="epub"):
+def download_ebook(id, with_images=False, format="epub"):
     """
     Download a epub file from the Gutenberg website with one number (id) = Text#
     """
@@ -100,5 +100,5 @@ print_data(data)
 url_ebook = get_epub_url(data, 62187)
 if url_ebook:
     print(url_ebook)
-    download_epub(62187)
+    download_ebook(62187)
 
