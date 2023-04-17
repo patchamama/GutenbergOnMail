@@ -47,7 +47,7 @@ def get_filter_data(data, filter=[], and_cond = True):
 
 def print_data(data):
     """
-    Print the fields Id, Authors, Title, Language with table format to see tabulated in terminal
+    Print the fields Id, Authors, Title, Language with table format to see the result tabulated in terminal
     """
     print('\n{:5s} | {:30s} | {:30s} | {:4s}'.format('Id', "Author", "Title", "Lang"))
     print(''.ljust(80, '-'))
@@ -88,17 +88,34 @@ def download_ebook(id, with_images=False, format="epub"):
         return None
 
 
+print(''.ljust(80, '-'))
+print('| python3 run.py [filter <condition>] [getebook <ID_Number> <email@domain>] [stat_request]')
+print('|    Examples:')
+print('|      python3 run.py filter "Thomas Jefferson"')
+print('|      python3 run.py getebook 62187 me@example.com')
+print('|      python3 run.py stat_request')
+print(''.ljust(80, '-'))
+print('| Options: 1. Search a book (filter) - 2. Send ebook to mail - 3. See Stat of request')
+option_sel = input('| Enter a option (enter to exit)?\n')
+
+print("Loading database...")
 catalog = SHEET.worksheet('pg_catalog')
 data = catalog.get_all_records()
 ##get_all_values()[1]
-print(len(data))
-print(data[0])
-data = get_filter_data(data, [{"Authors": "Jefferson"}, {"Authors": "Thomas"}, {"Language": "en"}, {"Type": "Text"}])
-print(len(data))
-print_data(data)
+print(f"{len(data)} records found...")
 
-url_ebook = get_epub_url(data, 62187)
-if url_ebook:
-    print(url_ebook)
-    download_ebook(62187)
+
+#print(data[0])
+#data = get_filter_data(data, [{"Authors": "Jefferson"}, {"Authors": "Thomas"}, {"Language": "en"}, {"Type": "Text"}])
+#print(len(data))
+#print_data(data)
+
+#url_ebook = get_epub_url(data, 62187)
+#if url_ebook:
+#    print(url_ebook)
+#    ebook_local = download_ebook(62187)
+#    if ebook_local:
+#        #Send a email with the ebook
+#        os.remove(ebook_local)
+#        pass
 
