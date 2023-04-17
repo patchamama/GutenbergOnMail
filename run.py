@@ -1,6 +1,3 @@
-# Your code goes here.
-# You can delete these comments, but do not change the name of this file
-# Write your code to expect a terminal of 80 characters wide and 24 rows high
 
 import gspread
 from google.oauth2.service_account import Credentials
@@ -16,21 +13,27 @@ SCOPED_CREDS = CREDS.with_scopes(SCOPE)
 GSPREAD_CLIENT = gspread.authorize(SCOPED_CREDS)
 SHEET = GSPREAD_CLIENT.open('GutenbergOnMail')
 
-def get_filter_data(data, filter=[]):
+def get_filter_data(data, filter=[], and_cond = True):
     """
     Filter all the data for the field condition especified in passed var filter
     """
     all_data=[]
     if len(filter)>0:
         for record in data:
-            passConds = True
+            passConds = and_cond ##If True: <cond> and <cond>, if False <cond> or <cond>
             for cond in filter:
                 for fieldcond, valcond in cond.items():
                     try:
                         if (isinstance(valcond,int)):
-                            passConds = (record[fieldcond] == valcond) and (passConds)
+                            if and_cond:
+                                passConds = (record[fieldcond] == valcond) and (passConds)
+                            else: ## or
+                                passConds = (record[fieldcond] == valcond) or (passConds)
                         else:  ## is string
-                            passConds = (valcond.lower() in record[fieldcond].lower()) and (passConds) 
+                            if and_cond:
+                                passConds = (valcond.lower() in record[fieldcond].lower()) and (passConds) 
+                            else: ## or
+                                passConds = (valcond.lower() in record[fieldcond].lower()) or (passConds) 
                     except:
                         pass
             if (passConds):
@@ -51,6 +54,9 @@ def print_data(data):
         print(f"{record['Text#']:5d} | {record['Authors'][:30]:30s} | {record['Title'][:30]:30s} | {record['Language']:4s}")
 
 def get_epub_url(data, id):
+    """
+    Return the URL of ebook to download it if a ID is given...
+    """
     record = get_filter_data(data, [{"Text#": int(id)}])
     if len(record) > 0:
         ##print_data(record)
