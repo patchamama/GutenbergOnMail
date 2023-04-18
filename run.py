@@ -27,22 +27,25 @@ def get_filter_data(data, filter=[], and_cond = True):
     all_data=[]
     if len(filter)>0:
         for record in data:
+            if "<operator>" in record:
+                and_cond = record["<operator>"]=="and"
             passConds = and_cond ##If True: <cond> and <cond>, if False <cond> or <cond>
             for cond in filter:
                 for fieldcond, valcond in cond.items():
-                    try:
-                        if (isinstance(valcond,int)):
-                            if and_cond:
-                                passConds = (record[fieldcond] == valcond) and (passConds)
-                            else: ## or
-                                passConds = (record[fieldcond] == valcond) or (passConds)
-                        else:  ## is string
-                            if and_cond:
-                                passConds = (valcond.lower() in record[fieldcond].lower()) and (passConds) 
-                            else: ## or
-                                passConds = (valcond.lower() in record[fieldcond].lower()) or (passConds) 
-                    except:
-                        pass
+                    if (fieldcond != "<operator>"):
+                        try:
+                            if (isinstance(valcond,int)):
+                                if and_cond:
+                                    passConds = (record[fieldcond] == valcond) and (passConds)
+                                else: ## or
+                                    passConds = (record[fieldcond] == valcond) or (passConds)
+                            else:  ## is string
+                                if and_cond:
+                                    passConds = (valcond.lower() in record[fieldcond].lower()) and (passConds) 
+                                else: ## or
+                                    passConds = (valcond.lower() in record[fieldcond].lower()) or (passConds) 
+                        except:
+                            pass
             if (passConds):
                 all_data.append(record)
         print(f"{len(all_data)} records found...")
@@ -133,13 +136,14 @@ def show_menu(opt):
             print('|------------------------------------------------------')
             print('|      7. Return to the main menu')
             print('|------------------------------------------------------')
+            print(cond_total)
             opt_menu = input('| Select a option?\n')
             if opt_menu == "1": #any field
                 search_cond = input("Enter the author or field to search?\n")
                 if len(search_cond) > 0:
                     if (len(catalog_data)==0):
                         catalog_data = get_all_records(catalog)
-                    cond_total.append([{"Authors": search_cond}, {"Title": search_cond}, {"operator": "and"}])
+                    cond_total.append([{"Authors": search_cond}, {"Title": search_cond}, {"<operator>": "or"}])
                     filtered_data = get_filter_data(catalog_data, [{"Authors": search_cond}, {"Title": search_cond}], False)
                     if (len(filtered_data)==0):
                         pause("No data found with ID={Id}")
@@ -154,6 +158,7 @@ def show_menu(opt):
                     pause("Error: the ID is not a number, please enter a number integer to search...")
                     continue
                 if len(search_cond) > 0:
+                    cond_total.append([{"Authors": search_cond}, {"Title": search_cond}, {"<operator>": "and"}])
                     if (len(catalog_data)==0):
                         catalog_data = get_all_records(catalog)
                     filtered_data = get_filter_data(catalog_data, [{"Text#": Id}])
