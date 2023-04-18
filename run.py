@@ -15,6 +15,10 @@ CREDS = Credentials.from_service_account_file('creds.json')
 SCOPED_CREDS = CREDS.with_scopes(SCOPE)
 GSPREAD_CLIENT = gspread.authorize(SCOPED_CREDS)
 SHEET = GSPREAD_CLIENT.open('GutenbergOnMail')
+print("Loading catalog data...")
+catalog = SHEET.worksheet('pg_catalog')
+
+catalog_data = [] #All data to work (of the sheet)
 
 def get_filter_data(data, filter=[], and_cond = True):
     """
@@ -41,6 +45,7 @@ def get_filter_data(data, filter=[], and_cond = True):
                         pass
             if (passConds):
                 all_data.append(record)
+        print(f"{len(all_data)} records found...")
     else:
         all_data = data
     return all_data
@@ -87,22 +92,98 @@ def download_ebook(id, with_images=False, format="epub"):
     except:
         return None
 
+def get_all_records(catalog):
+    """
+    Return all the data of the Catalog/sheet
+    """
+    print("Loading all the records...")
+    data = catalog.get_all_records()
+    #print(f"{len(data)} records found...")
+    return data
 
-print(''.ljust(80, '-'))
-print('| python3 run.py [filter <condition>] [getebook <ID_Number> <email@domain>] [stat_request]')
-print('|    Examples:')
-print('|      python3 run.py filter "Thomas Jefferson"')
-print('|      python3 run.py getebook 62187 me@example.com')
-print('|      python3 run.py stat_request')
-print(''.ljust(80, '-'))
-print('| Options: 1. Search a book (filter) - 2. Send ebook to mail - 3. See Stat of request')
-option_sel = input('| Enter a option (enter to exit)?\n')
+def pause(msg=""):
+    """
+    Show message to wait in the terminal
+    """
+    if len(msg)>0:
+        print(msg)
+    input("\nPress enter to continue...\n")
 
-print("Loading database...")
-catalog = SHEET.worksheet('pg_catalog')
-data = catalog.get_all_records()
+def clear_terminal():
+    """
+    Clear the terminal (reset)
+    """
+    os.system('cls' if os.name == 'nt' else 'clear') #clear the terminal 
+
+def show_menu(opt):
+    while True:
+        if opt=="1": #Search a book > filters
+            clear_terminal()
+            print('|====== SEARCH A BOOK (FILTER) =======================')
+            print('|----- One condition (simple) ------------------------')
+            print('|      1. Search in any field (author or title)')
+            print('|      2. Search a book for ID-Number')
+            print('|----- Multiple conditions (<AND> operator) -----------')
+            print('|      3. Add a author condition')
+            print('|      4. Add a title condition')
+            print('|      5. Add a language condition')
+            print('|      6. Change operator to <OR>')
+            print('|------------------------------------------------------')
+            print('|      7. Return to the main menu')
+            print('|------------------------------------------------------')
+            opt_menu = input('| Select a option?\n')
+            if opt_menu == "1": #any field
+
+            elif opt_menu =="7": #Return to the main menu
+                break
+        elif opt=="2": #Search and send ebook
+            break
+            pass
+        elif opt=="3": #Show statistics of request
+            break
+            pass
+        else:
+            pause(f'Error: Unknown option selected "{opt}"')
+            break
+
+
+def prompt_options():
+    """
+    Show in terminal commandLine options and interactive menu
+    """
+    while True:
+        clear_terminal()
+        print(''.ljust(80, '-'))
+        print('| python3 run.py [filter <condition>] [getebook <ID_Number> <email@domain>] [stat_request]')
+        print('|    Examples:')
+        print('|      python3 run.py filter "Thomas Jefferson"')
+        print('|      python3 run.py getebook 62187 me@example.com')
+        print('|      python3 run.py stat_request')
+        print(''.ljust(80, '-'))
+        print('| Options:')
+        print('|      1. Search a book (filter)')
+        print('|      2. Send ebook to mail')
+        print('|      3. See Statistics of request')
+        option_sel = input('| Select a option (press "q" to exit)?\n')
+        if option_sel.lower() =="q":
+            break
+        else: ##Validate the option in the func show_menu
+            show_menu(option_sel)
+            
+
+def main():
+    """
+    Main function
+    """
+    prompt_options()
+
+main()
+
+#data = catalog.get_all_records()
+#data = get_all_records(catalog)
+#print(f"{len(data)} records found...")
 ##get_all_values()[1]
-print(f"{len(data)} records found...")
+
 
 
 #print(data[0])
