@@ -116,6 +116,8 @@ def clear_terminal():
     os.system('cls' if os.name == 'nt' else 'clear') #clear the terminal 
 
 def show_menu(opt):
+    global catalog_data
+    cond_total = []
     while True:
         if opt=="1": #Search a book > filters
             clear_terminal()
@@ -133,7 +135,33 @@ def show_menu(opt):
             print('|------------------------------------------------------')
             opt_menu = input('| Select a option?\n')
             if opt_menu == "1": #any field
-
+                search_cond = input("Enter the author or field to search?\n")
+                if len(search_cond) > 0:
+                    if (len(catalog_data)==0):
+                        catalog_data = get_all_records(catalog)
+                    cond_total.append([{"Authors": search_cond}, {"Title": search_cond}, {"operator": "and"}])
+                    filtered_data = get_filter_data(catalog_data, [{"Authors": search_cond}, {"Title": search_cond}], False)
+                    if (len(filtered_data)==0):
+                        pause("No data found with ID={Id}")
+                    else:
+                        print_data(filtered_data)
+                        pause()
+            if opt_menu == "2": #ID
+                search_cond = input("Enter the ID to search?\n") 
+                try:
+                    Id = int(search_cond)
+                except ValueError:
+                    pause("Error: the ID is not a number, please enter a number integer to search...")
+                    continue
+                if len(search_cond) > 0:
+                    if (len(catalog_data)==0):
+                        catalog_data = get_all_records(catalog)
+                    filtered_data = get_filter_data(catalog_data, [{"Text#": Id}])
+                    if (len(filtered_data)==0):
+                        pause(f"No data found with ID={Id}")
+                    else:
+                        print_data(filtered_data)
+                        pause()
             elif opt_menu =="7": #Return to the main menu
                 break
         elif opt=="2": #Search and send ebook
