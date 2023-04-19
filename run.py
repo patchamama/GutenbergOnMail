@@ -20,7 +20,6 @@ print("Loading catalog data...")
 catalog = SHEET.worksheet('pg_catalog')
 catalog_data = []  # All data to work (of the sheet)
 
-
 def get_filter_data(data, filter=[], and_cond=True):
     """
     Filter all the data for the field condition especified in passed var filter
@@ -28,10 +27,11 @@ def get_filter_data(data, filter=[], and_cond=True):
     all_data = []
     if len(filter) > 0:
         for record in data:
-            if "<operator>" in record:
-                and_cond = record["<operator>"] == "and"
             passConds = and_cond  # If True: <cond> and <cond>, if False: or
             for cond in filter:
+                if "<operator>" in cond:
+                    and_cond = cond["<operator>"] == "and"
+                # print(f"--- {cond} / {filter} ---")
                 for fieldcond, valcond in cond.items():
                     if (fieldcond != "<operator>"):
                         try:
@@ -58,12 +58,21 @@ def print_data(data):
     """
     Print the fields Id, Authors, Title, Language with table format to see the result tabulated in terminal
     """
+    data_lang_stat = {}
+
     print('\n{:5s} | {:30s} | {:30s} | {:4s}'.format('Id', "Author", "Title", "Lang"))
     print(''.ljust(80, '-'))
     
     for record in data:
+        vlang = record['Language']
+        data_lang_stat[vlang] = (1) if (not vlang in data_lang_stat) else (data_lang_stat[vlang]+1)
         record['Title'] = record['Title'].replace("\n","")
         print(f"{record['Text#']:5d} | {record['Authors'][:30]:30s} | {record['Title'][:30]:30s} | {record['Language']:4s}")
+    if len(data_lang_stat) > 0:
+        print("Languages found:", end =" ")
+        for vlang, num in data_lang_stat.items():
+            print(f"{vlang} ({num})", end =" ")
+        print()
 
 def get_epub_url(data, id):
     """
@@ -177,8 +186,9 @@ def show_menu(opt):
                 search_cond = input("Enter the author or title to search?\n")
                 if len(search_cond) > 0:
                     filtered_data = catalog_data #Reset all the conditions and use as input all the data of the catalog
-                    cond_total = [{"Authors": search_cond}, {"Title": search_cond}, {"<operator>": "or"}]
-                    filtered_data = get_filter_data(filtered_data, [{"Authors": search_cond}, {"Title": search_cond}], False)
+                    cond_total.clear()
+                    cond_total.append([{"Authors": search_cond}, {"Title": search_cond}, {"<operator>": "or"}])
+                    filtered_data = get_filter_data(filtered_data, [{"Authors": search_cond}, {"Title": search_cond}, {"<operator>": "or"}])
                     if (len(filtered_data) == 0):
                         pause(f"No data found with title or author={search_cond}")
                     else:
@@ -193,7 +203,8 @@ def show_menu(opt):
                     continue
                 if len(search_cond) > 0:
                     filtered_data = catalog_data #Reset all the conditions and use as input all the data of the catalog
-                    cond_total = [{"Text#": Id}, {"<operator>": 'and' if (and_operator) else 'or'}]
+                    cond_total.clear()
+                    cond_total.append([{"Text#": Id}, {"<operator>": 'and' if (and_operator) else 'or'}])
                     filtered_data = get_filter_data(filtered_data, [{"Text#": Id}])
                     if (len(filtered_data)==0):
                         pause(f"No data found with ID={Id}")
@@ -201,11 +212,35 @@ def show_menu(opt):
                         print_data(filtered_data)
                         pause()
             elif opt_menu =="3": #Add a author condition
-                pass
+                search_cond = input("Enter the author to search?\n")
+                if len(search_cond) > 0:
+                    cond_total.append([{"Authors": search_cond}])
+                    filtered_data = get_filter_data(filtered_data, [{"Authors": search_cond}])
+                    if (len(filtered_data) == 0):
+                        pause(f"No data found with conditions: {search_cond}")
+                    else:
+                        print_data(filtered_data)
+                        pause()
             elif opt_menu =="4": #Add a title condition
-                pass
+                search_cond = input("Enter the title to search?\n")
+                if len(search_cond) > 0:
+                    cond_total.append([{"Title": search_cond}])
+                    filtered_data = get_filter_data(filtered_data, [{"Title": search_cond}])
+                    if (len(filtered_data) == 0):
+                        pause(f"No data found with conditions: {search_cond}")
+                    else:
+                        print_data(filtered_data)
+                        pause()
             elif opt_menu =="5": #Add a language condition
-                pass
+                search_cond = input("Enter the language to filter (en/es/fr/it)?\n")
+                if len(search_cond) > 0:
+                    cond_total.append([{"Language": search_cond}])
+                    filtered_data = get_filter_data(filtered_data, [{"Language": search_cond}])
+                    if (len(filtered_data) == 0):
+                        pause(f"No data found with conditions: {search_cond}")
+                    else:
+                        print_data(filtered_data)
+                        pause()
             elif opt_menu =="6": #Switch operator <or> / <and> 
                 and_operator = not and_operator
                 pause(f"Operator changed to <{'and' if (and_operator) else 'or'}>...")           
@@ -214,14 +249,19 @@ def show_menu(opt):
                 cond_total = []
                 pause("All conditions reseted...")
             elif opt_menu =="8": #Execute query with conditions
+                print_data(filtered_data)
+                pause()
                 if (len(cond_total)>0):
-                    filtered_data = get_filter_data(filtered_data, cond_total)
-                    if (len(filtered_data)==0):
-                        pause(f"No data found with with conditions: {cond_total}")
-                    else:
-                        print_data(filtered_data)
-                        pause()
-                    pass
+                    print_data(filtered_data)
+                    pause()
+                    #     filtered_data = catalog_data
+                    #     for cond in cond_total: 
+                    #         filtered_data = get_filter_data(filtered_data, [cond])
+                    #     if (len(filtered_data)==0):
+                    #         pause(f"No data found with with conditions: {cond_total}")
+                    #     else:
+                    #         print_data(filtered_data)
+                    #         pause()
                 else:
                     pause("First select some conditions to show some result")
             elif opt_menu =="9" or opt_menu =="q": #Return to the main menu
@@ -237,7 +277,7 @@ def show_menu(opt):
                 if valid_email(email_to):
                     send_ebook_mailto(email_to, filtered_data[0]["Text#"])
                 else:
-                    pause(f"Error with email address: {email_to}")
+                    pause(f"Error: Invalid email address: {email_to}")
             else:
                 pause("Please select some conditions and one book to send it (mail)")
                 break
