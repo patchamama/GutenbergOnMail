@@ -3,6 +3,7 @@ import gspread
 from google.oauth2.service_account import Credentials
 import os
 import urllib.request
+import re
 
 
 SCOPE = [
@@ -118,18 +119,38 @@ def clear_terminal():
     """
     os.system('cls' if os.name == 'nt' else 'clear') #clear the terminal 
 
+def valid_email(email_address):
+    """ 
+    Validate if the email address is valid
+    """
+    regex = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
+    return (re.fullmatch(regex, email_address))
+
+def send_ebook_mailto(email_address, ebook_id):
+    """ 
+    Send the ebook to the email address specified
+    """
+    pass
+
 def show_menu(opt):
+    """
+    Show submenus and/or do actions of the menus selected
+    """
     global catalog_data
-    if (len(catalog_data) == 0):
-        catalog_data = get_all_records(catalog)
     cond_total = []
+    filtered_data = []
     and_operator = True
     while True:
         if opt=="1": #Search a book > filters
+            if (len(catalog_data) == 0):
+                catalog_data = get_all_records(catalog)
             clear_terminal()
             print('|====== MAIN > SEARCH A BOOK (FILTER) ================')
             if len(cond_total) > 0:
-                print(f"| Conditions: {cond_total}")
+                print(f"|  Conditions: {cond_total}")
+                print(f"| Recs. found: {len(filtered_data)}")
+                if len(filtered_data) == 1:
+                    print(f"   (Id: {filtered_data[0]['Text#']}, Author: {filtered_data[0]['Authors'][:30]}, title: {filtered_data[0]['Title'][:30]}, lang:{filtered_data[0]['Language']})")
             else:
                 print("|      No conditions")
             print( '|----- One condition (simple + Conditions reset) ------')
@@ -145,6 +166,8 @@ def show_menu(opt):
             print( '|      8. Show results')
             print( '|------------------------------------------------------')
             print( '|      9. Return to the main menu')
+            if (len(filtered_data)==1):
+                print( '|      10. Send the ebook to email')
             print( '|------------------------------------------------------')
             opt_menu = input('| Select a option?\n')
             if opt_menu == "1": #any field
@@ -200,13 +223,29 @@ def show_menu(opt):
                     pause("First select some conditions to show some result")
             elif opt_menu =="9": #Return to the main menu
                 break
-        if opt=="2": #Send ebook to mail
-            pass
-        if opt=="3": #See Statistics of request
+            elif (len(filtered_data)==1) and (opt_menu =="10"):
+                opt="2"
+            else:
+                pause(f'Error: Unknown option selected "{opt_menu}"')
+        elif opt=="2": #Send ebook to mail
+            if (len(filtered_data)==1):
+                email_to = input("Enter the email address of the destiny?\n")
+                if valid_email(email_to):
+                    send_ebook_mailto(email_to, filtered_data[0]["Text#"])
+                else:
+                    pause(f"Error with email address: {email_to}")
+            else:
+                pause("Please select some conditions and one book to send it (mail)")
+                break
+            opt="1" #Show the submenu 1 again
+        elif opt=="3": #See Statistics of request
             pass
         else:
-            pause(f'Error: Unknown option selected "{opt}"')
+            pause(f'Error: Unknown option selected on main menu: "{opt}"')
             break
+        opt_menu=1 #Show the submenu 1 again
+        
+        
 
 
 def prompt_options():
