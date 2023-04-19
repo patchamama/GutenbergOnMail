@@ -18,32 +18,32 @@ GSPREAD_CLIENT = gspread.authorize(SCOPED_CREDS)
 SHEET = GSPREAD_CLIENT.open('GutenbergOnMail')
 print("Loading catalog data...")
 catalog = SHEET.worksheet('pg_catalog')
+catalog_data = []  # All data to work (of the sheet)
 
-catalog_data = [] #All data to work (of the sheet)
 
-def get_filter_data(data, filter=[], and_cond = True):
+def get_filter_data(data, filter=[], and_cond=True):
     """
     Filter all the data for the field condition especified in passed var filter
     """
-    all_data=[]
-    if len(filter)>0:
+    all_data = []
+    if len(filter) > 0:
         for record in data:
             if "<operator>" in record:
-                and_cond = record["<operator>"]=="and"
-            passConds = and_cond ##If True: <cond> and <cond>, if False <cond> or <cond>
+                and_cond = record["<operator>"] == "and"
+            passConds = and_cond  # If True: <cond> and <cond>, if False: or
             for cond in filter:
                 for fieldcond, valcond in cond.items():
                     if (fieldcond != "<operator>"):
                         try:
-                            if (isinstance(valcond,int)):
+                            if (isinstance(valcond, int)):
                                 if and_cond:
                                     passConds = (record[fieldcond] == valcond) and (passConds)
-                                else: ## or
+                                else:  # or
                                     passConds = (record[fieldcond] == valcond) or (passConds)
-                            else:  ## is string
+                            else:  # is string
                                 if and_cond:
                                     passConds = (valcond.lower() in record[fieldcond].lower()) and (passConds) 
-                                else: ## or
+                                else:  # or
                                     passConds = (valcond.lower() in record[fieldcond].lower()) or (passConds) 
                         except:
                             pass
@@ -100,7 +100,7 @@ def get_all_records(catalog):
     """
     Return all the data of the Catalog/sheet
     """
-    print("Loading all the records...")
+    print("Pre-loading all books...")
     data = catalog.get_all_records()
     #print(f"{len(data)} records found...")
     return data
@@ -144,32 +144,35 @@ def show_menu(opt):
         if opt=="1": #Search a book > filters
             if (len(catalog_data) == 0):
                 catalog_data = get_all_records(catalog)
+                filtered_data = catalog_data
             clear_terminal()
-            print('|====== MAIN > SEARCH A BOOK (FILTER) ================')
+            print('|====== MAIN > SEARCH A BOOK (FILTER) ===================')
             if len(cond_total) > 0:
                 print(f"|  Conditions: {cond_total}")
-                print(f"| Recs. found: {len(filtered_data)}")
+                print(f"| Books found: {len(filtered_data)}")
                 if len(filtered_data) == 1:
                     print(f"   (Id: {filtered_data[0]['Text#']}, Author: {filtered_data[0]['Authors'][:30]}, title: {filtered_data[0]['Title'][:30]}, lang:{filtered_data[0]['Language']})")
             else:
                 print("|      No conditions")
-            print( '|----- One condition (simple + Conditions reset) ------')
+            print( '|----- One condition (simple + Conditions reset) --------')
             print( '|      1. Search in any field (author or title)')
             print( '|      2. Search a book for ID-Number')
-            print( '|----- Multiple conditions (<AND> operator) -----------')
-            print( '|      3. Add a author condition')
-            print( '|      4. Add a title condition')
-            print( '|      5. Add a language condition')
-            print( '|------------------------------------------------------')
-            print(f'|      6. Change operator to <{"OR" if (and_operator) else "AND"}>')
+            if len(filtered_data) > 1: #Only use filter if there is more than 1 record/book found or not filters
+                print( '|----- Multiple conditions (<AND> operator) -------------')
+                print( '|      3. Add a author condition')
+                print( '|      4. Add a title condition')
+                print( '|      5. Add a language condition')
+            print( '|--------------------------------------------------------')
+            if len(filtered_data) > 1:
+                print(f'|      6. Change operator to <{"OR" if (and_operator) else "AND"}>')
             print( '|      7. Reset conditions')
             print( '|      8. Show results')
-            print( '|------------------------------------------------------')
+            print( '|--------------------------------------------------------')
             print( '|      9. Return to the main menu')
             if (len(filtered_data)==1):
                 print( '|      10. Send the ebook to email')
-            print( '|------------------------------------------------------')
-            opt_menu = input('| Select a option?\n')
+            print( '|--------------------------------------------------------')
+            opt_menu = input('| Select a option (press "q" to return to the main menu)?\n')
             if opt_menu == "1": #any field
                 search_cond = input("Enter the author or title to search?\n")
                 if len(search_cond) > 0:
@@ -221,12 +224,13 @@ def show_menu(opt):
                     pass
                 else:
                     pause("First select some conditions to show some result")
-            elif opt_menu =="9": #Return to the main menu
+            elif opt_menu =="9" or opt_menu =="q": #Return to the main menu
                 break
             elif (len(filtered_data)==1) and (opt_menu =="10"):
                 opt="2"
             else:
-                pause(f'Error: Unknown option selected "{opt_menu}"')
+                if opt_menu != "":
+                    pause(f'Error: Unknown option selected "{opt_menu}"')
         elif opt=="2": #Send ebook to mail
             if (len(filtered_data)==1):
                 email_to = input("Enter the email address of the destiny?\n")
@@ -241,7 +245,8 @@ def show_menu(opt):
         elif opt=="3": #See Statistics of request
             pass
         else:
-            pause(f'Error: Unknown option selected on main menu: "{opt}"')
+            if opt != "":
+                pause(f'Error: Unknown option selected on main menu: "{opt}"')
             break
         opt_menu=1 #Show the submenu 1 again
         
@@ -254,6 +259,7 @@ def prompt_options():
     """
     while True:
         clear_terminal()
+        print('|====== MAIN '+''.ljust(67, '='))
         print(''.ljust(80, '-'))
         print('| python3 run.py [filter <condition>] [getebook <ID_Number> <email@domain>] [stat_request]')
         print('|    Examples:')
