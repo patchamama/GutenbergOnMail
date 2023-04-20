@@ -66,7 +66,7 @@ def print_data(data):
     for record in data:
         vlang = record['Language']
         data_lang_stat[vlang] = (1) if (not vlang in data_lang_stat) else (data_lang_stat[vlang]+1)
-        record['Title'] = record['Title'].replace("\n","")
+        record['Title'] = str(record['Title']).replace("\n","") # Some record['Title'] are int
         print(f"{record['Text#']:5d} | {record['Authors'][:30]:30s} | {record['Title'][:30]:30s} | {record['Language']:4s}")
     if len(data_lang_stat) > 0:
         print("Languages found:", end =" ")
@@ -141,6 +141,16 @@ def send_ebook_mailto(email_address, ebook_id):
     """
     pass
 
+def clean_search(search_string):
+    """ 
+    Remove characters/symbols for better search: ()"'#-_[]...
+    """
+    for a in "()\"'#-_[]$!¿?=/&+%.,;":
+        search_string = search_string.replace(a, " ")
+    while "  " in search_string:
+        search_string = search_string.replace("  ", " ")
+    return search_string.lower().strip()
+
 def show_menu(opt):
     """
     Show submenus and/or do actions of the menus selected
@@ -160,7 +170,8 @@ def show_menu(opt):
                 print(f"|  Conditions: {cond_total}")
                 print(f"| Books found: {len(filtered_data)}")
                 if len(filtered_data) == 1:
-                    print(f"   (Id: {filtered_data[0]['Text#']}, Author: {filtered_data[0]['Authors'][:30]}, title: {filtered_data[0]['Title'][:30]}, lang:{filtered_data[0]['Language']})")
+                    print(f"   (Id: {filtered_data[0]['Text#']}, Author: {filtered_data[0]['Authors']}, title: {filtered_data[0]['Title']}, lang:{filtered_data[0]['Language']})")
+                    # print(f"   (Id: {filtered_data[0]['Text#']}, Author: {filtered_data[0]['Authors'][:30]}, title: {filtered_data[0]['Title'][:30]}, lang:{filtered_data[0]['Language']})")
             else:
                 print("|      No conditions")
             print( '|----- One condition (simple + Conditions reset) --------')
@@ -184,11 +195,15 @@ def show_menu(opt):
             opt_menu = input('| Select a option (press "q" to return to the main menu)?\n')
             if opt_menu == "1": #any field
                 search_cond = input("Enter the author or title to search?\n")
+                search_cond = clean_search(search_cond)
                 if len(search_cond) > 0:
                     filtered_data = catalog_data #Reset all the conditions and use as input all the data of the catalog
                     cond_total.clear()
-                    cond_total.append([{"Authors": search_cond}, {"Title": search_cond}, {"<operator>": "or"}])
-                    filtered_data = get_filter_data(filtered_data, [{"Authors": search_cond}, {"Title": search_cond}, {"<operator>": "or"}])
+                    list_words_search = search_cond.split()
+                    for word in list_words_search:
+                        cond_val = {"Authors": word}, {"Title": word}, {"<operator>": "or"}
+                        cond_total.append(cond_val)
+                        filtered_data = get_filter_data(filtered_data, list(cond_val))
                     if (len(filtered_data) == 0):
                         pause(f"No data found with title or author={search_cond}")
                     else:
@@ -196,6 +211,7 @@ def show_menu(opt):
                         pause()
             elif opt_menu == "2": #Search a ID
                 search_cond = input("Enter the ID to search?\n") 
+                search_cond = clean_search(search_cond)
                 try:
                     Id = int(search_cond)
                 except ValueError:
@@ -204,8 +220,9 @@ def show_menu(opt):
                 if len(search_cond) > 0:
                     filtered_data = catalog_data #Reset all the conditions and use as input all the data of the catalog
                     cond_total.clear()
-                    cond_total.append([{"Text#": Id}, {"<operator>": 'and' if (and_operator) else 'or'}])
-                    filtered_data = get_filter_data(filtered_data, [{"Text#": Id}])
+                    cond_val = {"Text#": Id}, {"<operator>": "or"}
+                    cond_total.append(cond_val)
+                    filtered_data = get_filter_data(filtered_data, list(cond_val))
                     if (len(filtered_data)==0):
                         pause(f"No data found with ID={Id}")
                     else:
@@ -213,29 +230,42 @@ def show_menu(opt):
                         pause()
             elif opt_menu =="3": #Add a author condition
                 search_cond = input("Enter the author to search?\n")
+                search_cond = clean_search(search_cond)
                 if len(search_cond) > 0:
-                    cond_total.append([{"Authors": search_cond}])
-                    filtered_data = get_filter_data(filtered_data, [{"Authors": search_cond}])
+                    list_words_search = search_cond.split()
+                    for word in list_words_search:
+                        cond_val = {"Authors": word}, {"<operator>": "or"}
+                        cond_total.append(cond_val)
+                        filtered_data = get_filter_data(filtered_data, list(cond_val))
                     if (len(filtered_data) == 0):
-                        pause(f"No data found with conditions: {search_cond}")
+                        pause(f"No data found with conditions: {cond_total}")
                     else:
                         print_data(filtered_data)
                         pause()
             elif opt_menu =="4": #Add a title condition
                 search_cond = input("Enter the title to search?\n")
+                search_cond = clean_search(search_cond)
                 if len(search_cond) > 0:
-                    cond_total.append([{"Title": search_cond}])
-                    filtered_data = get_filter_data(filtered_data, [{"Title": search_cond}])
+                    list_words_search = search_cond.split()
+                    for word in list_words_search:
+                        cond_val = {"Title": word}, {"<operator>": "or"}
+                        cond_total.append(cond_val)
+                        filtered_data = get_filter_data(filtered_data, list(cond_val))
                     if (len(filtered_data) == 0):
-                        pause(f"No data found with conditions: {search_cond}")
+                        pause(f"No data found with conditions: {cond_total}")
                     else:
                         print_data(filtered_data)
                         pause()
             elif opt_menu =="5": #Add a language condition
                 search_cond = input("Enter the language to filter (en/es/fr/it)?\n")
+                search_cond = clean_search(search_cond)
                 if len(search_cond) > 0:
-                    cond_total.append([{"Language": search_cond}])
-                    filtered_data = get_filter_data(filtered_data, [{"Language": search_cond}])
+                    if " " in search_cond:
+                        pause("Error: please type only one word. Example: en (to english)")
+                        continue
+                    cond_val = {"Language": search_cond}, {"<operator>": "or"}
+                    cond_total.append(cond_val)
+                    filtered_data = get_filter_data(filtered_data, list(cond_val))
                     if (len(filtered_data) == 0):
                         pause(f"No data found with conditions: {search_cond}")
                     else:
@@ -274,6 +304,7 @@ def show_menu(opt):
         elif opt=="2": #Send ebook to mail
             if (len(filtered_data)==1):
                 email_to = input("Enter the email address of the destiny?\n")
+                email_to = email_to.strip()
                 if valid_email(email_to):
                     send_ebook_mailto(email_to, filtered_data[0]["Text#"])
                 else:
@@ -299,6 +330,7 @@ def prompt_options():
     """
     while True:
         clear_terminal()
+        print('Vers. 0.16')
         print('|====== MAIN '+''.ljust(67, '='))
         print(''.ljust(80, '-'))
         print('| python3 run.py [filter <condition>] [getebook <ID_Number> <email@domain>] [stat_request]')
@@ -312,6 +344,7 @@ def prompt_options():
         print('|      2. Send ebook to mail')
         print('|      3. See Statistics of request')
         option_sel = input('| Select a option (press "q" to exit)?\n')
+        option_sel = option_sel.strip()
         if option_sel.lower() =="q":
             break
         else: ##Validate the option in the func show_menu
