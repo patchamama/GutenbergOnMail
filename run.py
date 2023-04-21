@@ -4,6 +4,7 @@ from google.oauth2.service_account import Credentials
 import os
 import urllib.request
 import re
+from datetime import date
 
 
 SCOPE = [
@@ -135,11 +136,29 @@ def valid_email(email_address):
     regex = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
     return (re.fullmatch(regex, email_address))
 
+def update_request_ebook_fname(worksheet_name, ebook_id, type_request):
+    """
+    Update request worksheet with the ebook_id request, 
+    type_request: [terminal, mail] and date or request
+    """ 
+    data_to_save = []
+    data_to_save.append(ebook_id)
+    data_to_save.append(type_request)
+    data_to_save.append(str(date.today()))
+    print(f"Updating {worksheet_name} in worksheet...\n")
+    worksheet_to_work = SHEET.worksheet(worksheet_name)
+    worksheet_to_work.append_row(data_to_save)
+    print(f"{worksheet_name} worksheet updated successfully\n")
+
 def send_ebook_mailto(email_address, ebook_id):
     """ 
     Send the ebook to the email address specified
     """
-    pass
+    #ebook_fname = download_ebook(ebook_id)
+    update_request_ebook_fname("requests", ebook_id, "terminal")
+
+    #os.remove(ebook_fname)
+
 
 def clean_search(search_string):
     """ 
