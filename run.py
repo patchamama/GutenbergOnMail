@@ -179,15 +179,12 @@ def get_info_from_data(book_id):
     """ 
     Return the datas from a book_id in the catalog data
     """
-    #    vdatapos = 0
-    #if (len(catalog_index)==0): # Create index of data to access directly with id > Text#
-    #    for record in data:
-    #        print(record)
-    #        vid = int(record["Text#"])
-    #        print(vid)
-    #        catalog_index[vid] = vdatapos
-    #        vdatapos += 1
-    pass
+    global catalog_data
+    for record in catalog_data:
+        if book_id == int(record["Text#"]):
+            return record['Authors'], record['Title'], record['Language']
+    return None
+
 
 def show_request_statistics():
     global catalog_data, catalog_index
@@ -196,25 +193,17 @@ def show_request_statistics():
     """ 
     requests_worksheet = SHEET.worksheet('requests')
     requests_vals = requests_worksheet.get_all_records()
-    print(requests_vals)
-
-    #if (len(catalog_data) == 0):
-    #    catalog_data = get_all_records(catalog)
 
     cant_books_req = {}
     for request_data in requests_vals:
         vid = request_data["Text#"]
         cant_books_req[vid] = (1) if not vid in cant_books_req else cant_books_req[vid]+1
 
+    print('\n{:5s} | {:5s} | {:30s} | {:30s} | {:4s}'.format("Id", "Count", "Author", "Title", "Lang"))
+    print(''.ljust(80, '-'))
     for vid in cant_books_req:
-        print(f"{vid} - {cant_books_req[vid]}")
-
-    #print(f"{record['Text#']:5d} | {record['Authors'][:30]:30s} | {record['Title'][:30]:30s} | {record['Language']:4s}")
-
-    #print(cant_books_req) 
-    #vid = record["Text#"]
-    #catalog_index[vid] = vdatapos
-
+        vaut, vtit, vlang = get_info_from_data(vid)
+        print(f"{vid:5d} | {cant_books_req[vid]:5d} | {vaut[:30]:30s} | {vtit[:30]:30s} | {vlang:4s}")
     pause()
 
 
@@ -289,6 +278,10 @@ def wrap_string_atpos(st, initstring, atpos):
     return endstring
     
 def query_field(prompt, conditions, reset_filter= False, input_as_string = True):
+    """
+    Input the value of the field and predefine the value of the conditions
+    fields and value and execute the filter
+    """
     global catalog_data
     global cond_total
     global filtered_data
