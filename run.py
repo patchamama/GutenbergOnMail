@@ -29,11 +29,11 @@ def get_filter_data(data, filter=[], and_cond=True):
         for record in data:
             passConds = and_cond  # If True: <cond> and <cond>, if False: or
             for cond in filter:
-                if "<operator>" in cond:
-                    and_cond = cond["<operator>"] == "and"
+                if "OPERATOR" in cond:
+                    and_cond = cond["OPERATOR"] == "and"
                 # print(f"--- {cond} / {filter} ---")
                 for fieldcond, valcond in cond.items():
-                    if (fieldcond != "<operator>"):
+                    if (fieldcond != "OPERATOR"):
                         try:
                             if (isinstance(valcond, int)):
                                 if and_cond:
@@ -49,7 +49,7 @@ def get_filter_data(data, filter=[], and_cond=True):
                             pass
             if (passConds):
                 all_data.append(record)
-        print(f"{len(all_data)} records found...")
+        #print(f"{len(all_data)} records found...")
     else:
         all_data = data
     return all_data
@@ -151,6 +151,32 @@ def clean_search(search_string):
         search_string = search_string.replace("  ", " ")
     return search_string.lower().strip()
 
+def get_conditions_pretty(conditions):
+    """ 
+    Returns the conditions in a more readable format
+    """
+    # print(conditions)
+    str_conditions = ""
+    cant_items = 0
+    for items in conditions: # List of items with conditions [({'Authors': 'shakes'}, {'Title': 'shakes'}, {'OPERATOR': 'or'})]
+        cant_items += 1
+        cant_cond = 0
+        srt_operator = "or"
+        if cant_items > 1:
+            str_conditions += " and " # by default the relation between conds add are "and"
+        str_conditions += "("           
+        for cond in items: # Every item with one cond: ({'Authors': 'shakes'}, {'Title': 'shakes'}, {'OPERATOR': 'or'}) 
+            if "OPERATOR" in cond:
+                srt_operator = ("and") if cond["OPERATOR"] == "and" else "or"
+            for (fname, fval) in cond.items(): 
+                if (fname != "OPERATOR"):
+                    cant_cond += 1
+                    if (cant_cond > 1):
+                        str_conditions += " "+srt_operator+" "
+                    str_conditions += f'{fname}="{fval}"'
+        str_conditions += ")"
+    return str_conditions
+
 def show_menu(opt):
     """
     Show submenus and/or do actions of the menus selected
@@ -167,7 +193,7 @@ def show_menu(opt):
             clear_terminal()
             print('|====== MAIN > SEARCH A BOOK (FILTER) ===================')
             if len(cond_total) > 0:
-                print(f"|  Conditions: {cond_total}")
+                print(f"|  Conditions: { get_conditions_pretty(cond_total) }")
                 print(f"| Books found: {len(filtered_data)}")
                 if len(filtered_data) == 1:
                     print(f"   (Id: {filtered_data[0]['Text#']}, Author: {filtered_data[0]['Authors']}, title: {filtered_data[0]['Title']}, lang:{filtered_data[0]['Language']})")
@@ -183,14 +209,14 @@ def show_menu(opt):
                 print( '|      4. Add a title condition')
                 print( '|      5. Add a language condition')
             print( '|--------------------------------------------------------')
-            if len(filtered_data) > 1:
-                print(f'|      6. Change operator to <{"OR" if (and_operator) else "AND"}>')
-            print( '|      7. Reset conditions')
-            print( '|      8. Show results')
+            #if len(filtered_data) > 1: #Option to new version with many levels of conditions
+            #    print(f'|      6. Change operator to <{"OR" if (and_operator) else "AND"}>')
+            print( '|      6. Reset conditions')
+            print( '|      7. Show results')
             print( '|--------------------------------------------------------')
-            print( '|      9. Return to the main menu')
+            print( '|      8. Return to the main menu')
             if (len(filtered_data)==1):
-                print( '|      10. Send the ebook to email')
+                print( '|      9. Send the ebook to email')
             print( '|--------------------------------------------------------')
             opt_menu = input('| Select a option (press "q" to return to the main menu)?\n')
             if opt_menu == "1": #any field
@@ -201,7 +227,7 @@ def show_menu(opt):
                     cond_total.clear()
                     list_words_search = search_cond.split()
                     for word in list_words_search:
-                        cond_val = {"Authors": word}, {"Title": word}, {"<operator>": "or"}
+                        cond_val = {"Authors": word}, {"Title": word}, {"OPERATOR": "or"}
                         cond_total.append(cond_val)
                         filtered_data = get_filter_data(filtered_data, list(cond_val))
                     if (len(filtered_data) == 0):
@@ -220,7 +246,7 @@ def show_menu(opt):
                 if len(search_cond) > 0:
                     filtered_data = catalog_data #Reset all the conditions and use as input all the data of the catalog
                     cond_total.clear()
-                    cond_val = {"Text#": Id}, {"<operator>": "or"}
+                    cond_val = {"Text#": Id}, {"OPERATOR": "or"}
                     cond_total.append(cond_val)
                     filtered_data = get_filter_data(filtered_data, list(cond_val))
                     if (len(filtered_data)==0):
@@ -234,7 +260,7 @@ def show_menu(opt):
                 if len(search_cond) > 0:
                     list_words_search = search_cond.split()
                     for word in list_words_search:
-                        cond_val = {"Authors": word}, {"<operator>": "or"}
+                        cond_val = {"Authors": word}, {"OPERATOR": "or"}
                         cond_total.append(cond_val)
                         filtered_data = get_filter_data(filtered_data, list(cond_val))
                     if (len(filtered_data) == 0):
@@ -248,7 +274,7 @@ def show_menu(opt):
                 if len(search_cond) > 0:
                     list_words_search = search_cond.split()
                     for word in list_words_search:
-                        cond_val = {"Title": word}, {"<operator>": "or"}
+                        cond_val = {"Title": word}, {"OPERATOR": "or"}
                         cond_total.append(cond_val)
                         filtered_data = get_filter_data(filtered_data, list(cond_val))
                     if (len(filtered_data) == 0):
@@ -263,7 +289,7 @@ def show_menu(opt):
                     if " " in search_cond:
                         pause("Error: please type only one word. Example: en (to english)")
                         continue
-                    cond_val = {"Language": search_cond}, {"<operator>": "or"}
+                    cond_val = {"Language": search_cond}, {"OPERATOR": "or"}
                     cond_total.append(cond_val)
                     filtered_data = get_filter_data(filtered_data, list(cond_val))
                     if (len(filtered_data) == 0):
@@ -271,14 +297,14 @@ def show_menu(opt):
                     else:
                         print_data(filtered_data)
                         pause()
-            elif opt_menu =="6": #Switch operator <or> / <and> 
-                and_operator = not and_operator
-                pause(f"Operator changed to <{'and' if (and_operator) else 'or'}>...")           
-            elif opt_menu =="7": #Reset all the conditions
+            #elif opt_menu =="6": #Switch operator <or> / <and> 
+            #    and_operator = not and_operator
+            #    pause(f"Operator changed to <{'and' if (and_operator) else 'or'}>...")           
+            elif opt_menu =="6": #Reset all the conditions
                 filtered_data = catalog_data #Reset all the conditions and use as input all the data of the catalog
                 cond_total = []
                 pause("All conditions reseted...")
-            elif opt_menu =="8": #Execute query with conditions
+            elif opt_menu =="7": #Execute query with conditions
                 print_data(filtered_data)
                 pause()
                 if (len(cond_total)>0):
@@ -294,9 +320,9 @@ def show_menu(opt):
                     #         pause()
                 else:
                     pause("First select some conditions to show some result")
-            elif opt_menu =="9" or opt_menu =="q": #Return to the main menu
+            elif opt_menu =="8" or opt_menu =="q": #Return to the main menu
                 break
-            elif (len(filtered_data)==1) and (opt_menu =="10"):
+            elif (len(filtered_data)==1) and (opt_menu =="9"): # Send a ebook if there is 1 book selected
                 opt="2"
             else:
                 if opt_menu != "":
