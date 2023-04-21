@@ -20,6 +20,7 @@ SHEET = GSPREAD_CLIENT.open('GutenbergOnMail')
 print("Loading catalog data...")
 catalog = SHEET.worksheet('pg_catalog')
 catalog_data = []  # All data to work (of the sheet)
+catalog_index = [] # Index to access directly to every element of the catalog {id} > {Text#}
 
 def get_filter_data(data, filter=[], and_cond=True):
     """
@@ -107,6 +108,7 @@ def download_ebook(id, with_images=False, format="epub"):
         return None
 
 def get_all_records(catalog):
+    global catalog_index, catalog_index
     """
     Return all the data of the Catalog/sheet
     """
@@ -149,6 +151,49 @@ def update_request_ebook_fname(worksheet_name, ebook_id, type_request):
     worksheet_to_work = SHEET.worksheet(worksheet_name)
     worksheet_to_work.append_row(data_to_save)
     print(f"{worksheet_name} worksheet updated successfully\n")
+
+def get_info_from_data(book_id):
+    """ 
+    Return the datas from a book_id in the catalog data
+    """
+    #    vdatapos = 0
+    #if (len(catalog_index)==0): # Create index of data to access directly with id > Text#
+    #    for record in data:
+    #        print(record)
+    #        vid = int(record["Text#"])
+    #        print(vid)
+    #        catalog_index[vid] = vdatapos
+    #        vdatapos += 1
+    pass
+
+def show_request_statistics():
+    global catalog_data, catalog_index
+    """
+    Check requested books and show statistics of the most searched books
+    """ 
+    requests_worksheet = SHEET.worksheet('requests')
+    requests_vals = requests_worksheet.get_all_records()
+    #print(requests_vals)
+
+    #if (len(catalog_data) == 0):
+    #    catalog_data = get_all_records(catalog)
+
+    cant_books_req = {}
+    for request_data in requests_vals:
+        vid = request_data["Text#"]
+        cant_books_req[vid] = (1) if not vid in cant_books_req else cant_books_req[vid]+1
+
+    for vid in cant_books_req:
+        print(f"{vid} - {cant_books_req[vid]}")
+
+    #print(f"{record['Text#']:5d} | {record['Authors'][:30]:30s} | {record['Title'][:30]:30s} | {record['Language']:4s}")
+
+    #print(cant_books_req) 
+    #vid = record["Text#"]
+    #catalog_index[vid] = vdatapos
+
+    pause()
+
 
 def send_ebook_mailto(email_address, ebook_id):
     """ 
@@ -213,10 +258,11 @@ def show_menu(opt):
             print('|====== MAIN > SEARCH A BOOK (FILTER) ===================')
             if len(cond_total) > 0:
                 print(f"|  Conditions: { get_conditions_pretty(cond_total) }")
-                print(f"| Books found: {len(filtered_data)}")
                 if len(filtered_data) == 1:
-                    print(f"   (Id: {filtered_data[0]['Text#']}, Author: {filtered_data[0]['Authors']}, title: {filtered_data[0]['Title']}, lang:{filtered_data[0]['Language']})")
+                    print(f"| Books found: {len(filtered_data)} (Id: {filtered_data[0]['Text#']}, Author: {filtered_data[0]['Authors']}, title: {filtered_data[0]['Title']}, lang:{filtered_data[0]['Language']})")
                     # print(f"   (Id: {filtered_data[0]['Text#']}, Author: {filtered_data[0]['Authors'][:30]}, title: {filtered_data[0]['Title'][:30]}, lang:{filtered_data[0]['Language']})")
+                else:
+                    print(f"| Books found: {len(filtered_data)}")
             else:
                 print("|      No conditions")
             print( '|----- One condition (simple + Conditions reset) --------')
@@ -349,7 +395,8 @@ def show_menu(opt):
                 break
             opt="1" #Show the submenu 1 again
         elif opt=="3": #See Statistics of request
-            pass
+            show_request_statistics()
+            break
         else:
             if opt != "":
                 pause(f'Error: Unknown option selected on main menu: "{opt}"')
