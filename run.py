@@ -157,7 +157,6 @@ def get_all_records(catalog):
     """
     print("Pre-loading all books...")
     data = catalog.get_all_records()
-    # print(f"{len(data)} records found...")
     return data
 
 
@@ -208,7 +207,7 @@ def get_info_from_data(book_id):
     for record in catalog_data:
         if book_id == int(record["Text#"]):
             return record["Authors"], record["Title"], record["Language"]
-    return None
+    return "-", "-", "-"
 
 
 def show_request_statistics():
@@ -221,7 +220,7 @@ def show_request_statistics():
 
     cant_books_req = {}
     for request_data in requests_vals:
-        vid = request_data["Text#"]
+        vid = int(request_data["Text#"])
         cant_books_req[vid] = (
             (1) if not vid in cant_books_req else cant_books_req[vid] + 1
         )
@@ -231,11 +230,17 @@ def show_request_statistics():
             "Id", "Count", "Author", "Title", "Lang"
         )
     )
+
+    # Sort the requests for the number of request desc
+    cant_books_req = sorted(cant_books_req.items(), key = lambda x:x[1], reverse = True)
+
     print("".ljust(86, "-"))
-    for vid in cant_books_req:
-        vaut, vtit, vlang = get_info_from_data(vid)
+    for val_books in cant_books_req:
+        no_book = val_books[0]
+        count_book = val_books[1]
+        vaut, vtit, vlang = get_info_from_data(no_book)
         print(
-            f"{vid:5d} | {cant_books_req[vid]:5d} | {vaut[:30]:30s} | {vtit[:30]:30s} | {vlang:4s}"
+            f"{no_book:5d} | {count_book:5d} | {vaut[:30]:30s} | {vtit[:30]:30s} | {vlang:4s}"
         )
     pause()
 
@@ -394,7 +399,7 @@ def show_menu(opt):
                 unique_book_val=vtemp,
             )
         )
-        opt_menu = input('| Select a option (press "q" to return to the main menu)?\n')
+        opt_menu = input('Select a option (press "q" to return to the main menu)?\n')
         opt_menu = opt_menu.lower()
 
         if opt_menu == "1":  # any field
