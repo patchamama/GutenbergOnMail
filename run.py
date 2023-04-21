@@ -308,14 +308,6 @@ def show_menu(opt):
                 if (len(cond_total)>0):
                     print_data(filtered_data)
                     pause()
-                    #     filtered_data = catalog_data
-                    #     for cond in cond_total: 
-                    #         filtered_data = get_filter_data(filtered_data, [cond])
-                    #     if (len(filtered_data)==0):
-                    #         pause(f"No data found with with conditions: {cond_total}")
-                    #     else:
-                    #         print_data(filtered_data)
-                    #         pause()
                 else:
                     pause("First select some conditions to show some result")
             elif opt_menu =="8" or opt_menu =="q": #Return to the main menu
