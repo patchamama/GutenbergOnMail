@@ -1,4 +1,3 @@
-
 import gspread
 from google.oauth2.service_account import Credentials
 import os
@@ -31,19 +30,22 @@ MENU_OPTIONS_TEMPLATE = """
 SCOPE = [
     "https://www.googleapis.com/auth/spreadsheets",
     "https://www.googleapis.com/auth/drive.file",
-    "https://www.googleapis.com/auth/drive"
-    ]
+    "https://www.googleapis.com/auth/drive",
+]
 
-CREDS = Credentials.from_service_account_file('creds.json')
+CREDS = Credentials.from_service_account_file("creds.json")
 SCOPED_CREDS = CREDS.with_scopes(SCOPE)
 GSPREAD_CLIENT = gspread.authorize(SCOPED_CREDS)
-SHEET = GSPREAD_CLIENT.open('GutenbergOnMail')
+SHEET = GSPREAD_CLIENT.open("GutenbergOnMail")
 print("Opening catalog data...")
-catalog = SHEET.worksheet('pg_catalog')
+catalog = SHEET.worksheet("pg_catalog")
 catalog_data = []  # All data to work (of the sheet)
 filtered_data = []  # Result of data after filter ON
-catalog_index = [] # Index to access directly to every element of the catalog {id} > {Text#}
-cond_total = [] # All the conditions defined (filter)
+catalog_index = (
+    []
+)  # Index to access directly to every element of the catalog {id} > {Text#}
+cond_total = []  # All the conditions defined (filter)
+
 
 def get_filter_data(data, filter=[], and_cond=True):
     """
@@ -58,26 +60,35 @@ def get_filter_data(data, filter=[], and_cond=True):
                     and_cond = cond["OPERATOR"] == "and"
                 # print(f"--- {cond} / {filter} ---")
                 for fieldcond, valcond in cond.items():
-                    if (fieldcond != "OPERATOR"):
+                    if fieldcond != "OPERATOR":
                         try:
-                            if (isinstance(valcond, int)):
+                            if isinstance(valcond, int):
                                 if and_cond:
-                                    passConds = (record[fieldcond] == valcond) and (passConds)
+                                    passConds = (record[fieldcond] == valcond) and (
+                                        passConds
+                                    )
                                 else:  # or
-                                    passConds = (record[fieldcond] == valcond) or (passConds)
+                                    passConds = (record[fieldcond] == valcond) or (
+                                        passConds
+                                    )
                             else:  # is string
                                 if and_cond:
-                                    passConds = (valcond.lower() in record[fieldcond].lower()) and (passConds) 
+                                    passConds = (
+                                        valcond.lower() in record[fieldcond].lower()
+                                    ) and (passConds)
                                 else:  # or
-                                    passConds = (valcond.lower() in record[fieldcond].lower()) or (passConds) 
+                                    passConds = (
+                                        valcond.lower() in record[fieldcond].lower()
+                                    ) or (passConds)
                         except:
                             pass
-            if (passConds):
+            if passConds:
                 all_data.append(record)
-        #print(f"{len(all_data)} records found...")
+        # print(f"{len(all_data)} records found...")
     else:
         all_data = data
     return all_data
+
 
 def print_data(data):
     """
@@ -85,19 +96,26 @@ def print_data(data):
     """
     data_lang_stat = {}
 
-    print('\n{:5s} | {:30s} | {:30s} | {:4s}'.format('Id', "Author", "Title", "Lang"))
-    print(''.ljust(80, '-'))
-    
+    print("\n{:5s} | {:30s} | {:30s} | {:4s}".format("Id", "Author", "Title", "Lang"))
+    print("".ljust(80, "-"))
+
     for record in data:
-        vlang = record['Language']
-        data_lang_stat[vlang] = (1) if (not vlang in data_lang_stat) else (data_lang_stat[vlang]+1)
-        record['Title'] = str(record['Title']).replace("\n","") # Some record['Title'] are int
-        print(f"{record['Text#']:5d} | {record['Authors'][:30]:30s} | {record['Title'][:30]:30s} | {record['Language']:4s}")
+        vlang = record["Language"]
+        data_lang_stat[vlang] = (
+            (1) if (not vlang in data_lang_stat) else (data_lang_stat[vlang] + 1)
+        )
+        record["Title"] = str(record["Title"]).replace(
+            "\n", ""
+        )  # Some record['Title'] are int
+        print(
+            f"{record['Text#']:5d} | {record['Authors'][:30]:30s} | {record['Title'][:30]:30s} | {record['Language']:4s}"
+        )
     if len(data_lang_stat) > 0:
-        print("Languages found:", end =" ")
+        print("Languages found:", end=" ")
         for vlang, num in data_lang_stat.items():
-            print(f"{vlang} ({num})", end =" ")
+            print(f"{vlang} ({num})", end=" ")
         print()
+
 
 def get_epub_url(data, id):
     """
@@ -110,25 +128,27 @@ def get_epub_url(data, id):
     else:
         return None
 
+
 def download_ebook(id, with_images=False, format="epub"):
     """
     Download a epub file from the Gutenberg website with one number (id) = Text#
     """
-    #https://www.gutenberg.org/ebooks/62187.epub.images
-    #https://www.gutenberg.org/ebooks/62187.epub3.images
-    #https://www.gutenberg.org/ebooks/62187.epub.noimages
+    # https://www.gutenberg.org/ebooks/62187.epub.images
+    # https://www.gutenberg.org/ebooks/62187.epub3.images
+    # https://www.gutenberg.org/ebooks/62187.epub.noimages
     urlimage = "images" if (with_images) else "noimages"
     url_ebook = f"https://www.gutenberg.org/ebooks/{id}.{format}.{urlimage}"
     print(url_ebook)
     try:
         web_file = urllib.request.urlopen(url_ebook).read()
         file_name = f"{id}.epub"
-        epub_local=open(file_name, 'wb')
+        epub_local = open(file_name, "wb")
         epub_local.write(web_file)
         epub_local.close()
         return file_name
     except:
         return None
+
 
 def get_all_records(catalog):
     global catalog_index, catalog_index
@@ -137,35 +157,39 @@ def get_all_records(catalog):
     """
     print("Pre-loading all books...")
     data = catalog.get_all_records()
-    #print(f"{len(data)} records found...")
+    # print(f"{len(data)} records found...")
     return data
+
 
 def pause(msg=""):
     """
     Show message to wait in the terminal
     """
-    if len(msg)>0:
+    if len(msg) > 0:
         print(msg)
     input("\nPress enter to continue...\n")
+
 
 def clear_terminal():
     """
     Clear the terminal (reset)
     """
-    os.system('cls' if os.name == 'nt' else 'clear') #clear the terminal 
+    os.system("cls" if os.name == "nt" else "clear")  # clear the terminal
+
 
 def valid_email(email_address):
-    """ 
+    """
     Validate if the email address is valid
     """
-    regex = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
-    return (re.fullmatch(regex, email_address))
+    regex = r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b"
+    return re.fullmatch(regex, email_address)
+
 
 def update_request_ebook_fname(worksheet_name, ebook_id, type_request):
     """
-    Update request worksheet with the ebook_id request, 
+    Update request worksheet with the ebook_id request,
     type_request: [terminal, mail] and date or request
-    """ 
+    """
     data_to_save = []
     data_to_save.append(ebook_id)
     data_to_save.append(type_request)
@@ -175,14 +199,15 @@ def update_request_ebook_fname(worksheet_name, ebook_id, type_request):
     worksheet_to_work.append_row(data_to_save)
     print(f"{worksheet_name} worksheet updated successfully\n")
 
+
 def get_info_from_data(book_id):
-    """ 
+    """
     Return the datas from a book_id in the catalog data
     """
     global catalog_data
     for record in catalog_data:
         if book_id == int(record["Text#"]):
-            return record['Authors'], record['Title'], record['Language']
+            return record["Authors"], record["Title"], record["Language"]
     return None
 
 
@@ -190,36 +215,44 @@ def show_request_statistics():
     global catalog_data, catalog_index
     """
     Check requested books and show statistics of the most searched books
-    """ 
-    requests_worksheet = SHEET.worksheet('requests')
+    """
+    requests_worksheet = SHEET.worksheet("requests")
     requests_vals = requests_worksheet.get_all_records()
 
     cant_books_req = {}
     for request_data in requests_vals:
         vid = request_data["Text#"]
-        cant_books_req[vid] = (1) if not vid in cant_books_req else cant_books_req[vid]+1
+        cant_books_req[vid] = (
+            (1) if not vid in cant_books_req else cant_books_req[vid] + 1
+        )
 
-    print('\n{:5s} | {:5s} | {:30s} | {:30s} | {:4s}'.format("Id", "Count", "Author", "Title", "Lang"))
-    print(''.ljust(80, '-'))
+    print(
+        "\n{:5s} | {:5s} | {:30s} | {:30s} | {:4s}".format(
+            "Id", "Count", "Author", "Title", "Lang"
+        )
+    )
+    print("".ljust(86, "-"))
     for vid in cant_books_req:
         vaut, vtit, vlang = get_info_from_data(vid)
-        print(f"{vid:5d} | {cant_books_req[vid]:5d} | {vaut[:30]:30s} | {vtit[:30]:30s} | {vlang:4s}")
+        print(
+            f"{vid:5d} | {cant_books_req[vid]:5d} | {vaut[:30]:30s} | {vtit[:30]:30s} | {vlang:4s}"
+        )
     pause()
 
 
 def send_ebook_mailto(email_address, ebook_id):
-    """ 
+    """
     Send the ebook to the email address specified
     """
-    #ebook_fname = download_ebook(ebook_id)
+    # ebook_fname = download_ebook(ebook_id)
     update_request_ebook_fname("requests", ebook_id, "terminal")
 
-    #os.remove(ebook_fname)
-    # TODO: send to actual email later... 
+    # os.remove(ebook_fname)
+    # TODO: send to actual email later...
 
 
 def clean_search(search_string):
-    """ 
+    """
     Remove characters/symbols for better search: ()"'#-_[]...
     """
     for a in "()\"'#-_[]$!¿?=/&+%.,;":
@@ -228,8 +261,9 @@ def clean_search(search_string):
         search_string = search_string.replace("  ", " ")
     return search_string.lower().strip()
 
+
 def get_conditions_pretty(conditions):
-    """ 
+    """
     Returns the conditions in a more readable format
     """
     # print(conditions)
@@ -237,47 +271,59 @@ def get_conditions_pretty(conditions):
     cant_items = 0
     if len(conditions) == 0:
         return "No defined condition"
-    for items in conditions: # List of items with conditions [({'Authors': 'shakes'}, {'Title': 'shakes'}, {'OPERATOR': 'or'})]
+    for (
+        items
+    ) in (
+        conditions
+    ):  # List of items with conditions [({'Authors': 'shakes'}, {'Title': 'shakes'}, {'OPERATOR': 'or'})]
         cant_items += 1
         cant_cond = 0
         srt_operator = "or"
         if cant_items > 1:
-            str_conditions += " and " # by default the relation between conds add are "and"
-        str_conditions += "("           
-        for cond in items: # Every item with one cond: ({'Authors': 'shakes'}, {'Title': 'shakes'}, {'OPERATOR': 'or'}) 
+            str_conditions += (
+                " and "  # by default the relation between conds add are "and"
+            )
+        str_conditions += "("
+        for (
+            cond
+        ) in (
+            items
+        ):  # Every item with one cond: ({'Authors': 'shakes'}, {'Title': 'shakes'}, {'OPERATOR': 'or'})
             if "OPERATOR" in cond:
                 srt_operator = ("and") if cond["OPERATOR"] == "and" else "or"
-            for (fname, fval) in cond.items(): 
-                if (fname != "OPERATOR"):
+            for fname, fval in cond.items():
+                if fname != "OPERATOR":
                     cant_cond += 1
-                    if (cant_cond > 1):
-                        str_conditions += " "+srt_operator+" "
+                    if cant_cond > 1:
+                        str_conditions += " " + srt_operator + " "
                     str_conditions += f'{fname}="{fval}"'
         str_conditions += ")"
     return str_conditions
 
+
 def wrap_string_atpos(st, initstring, atpos):
-    """ 
+    """
     Wrap a string to show well formated
     """
     endstring = ""
-    if (len(st) <= atpos):
+    if len(st) <= atpos:
         return st
-    while (len(st) > atpos):
+    while len(st) > atpos:
         right = " "
         for a in range(atpos, 0, -1):
-            if a==1:
-                endstring += st if len(endstring)==0 else "\n"+st  
+            if a == 1:
+                endstring += st if len(endstring) == 0 else "\n" + st
                 return endstring
-            if (right == " "):
+            if right == " ":
                 if st[a] == " ":
                     left, right = st[:a], st[a:]
-                    endstring += left if len(endstring)==0 else "\n"+left
+                    endstring += left if len(endstring) == 0 else "\n" + left
                     st = initstring + right
-    endstring += st if len(endstring)==0 else "\n"+st  
+    endstring += st if len(endstring) == 0 else "\n" + st
     return endstring
-    
-def query_field(prompt, conditions, reset_filter= False, input_as_string = True):
+
+
+def query_field(prompt, conditions, reset_filter=False, input_as_string=True):
     """
     Input the value of the field and predefine the value of the conditions
     fields and value and execute the filter
@@ -293,12 +339,14 @@ def query_field(prompt, conditions, reset_filter= False, input_as_string = True)
         try:
             test = int(search_cond)
         except ValueError:
-            pause("Error: the value is not a number, please enter a number integer to search...")
+            pause(
+                "Error: the value is not a number, please enter a number integer to search..."
+            )
             return
 
     if len(search_cond) > 0:
         if reset_filter:
-            filtered_data = catalog_data #Reset all the conditions and use as input all the data of the catalog
+            filtered_data = catalog_data  # Reset all the conditions and use as input all the data of the catalog
             cond_total.clear()
         list_words_search = search_cond.split()
         for word in list_words_search:
@@ -308,15 +356,16 @@ def query_field(prompt, conditions, reset_filter= False, input_as_string = True)
                     if cond_val != "OPERATOR":
                         if input_as_string:
                             cond_val[vcond] = word
-                        else: 
+                        else:
                             cond_val[vcond] = int(word)
             cond_total.append(partial_cond)
             filtered_data = get_filter_data(filtered_data, list(partial_cond))
-        if (len(filtered_data) == 0):
+        if len(filtered_data) == 0:
             pause(f"No data found with the conditions: {search_cond}")
         else:
             print_data(filtered_data)
             pause()
+
 
 def show_menu(opt):
     """
@@ -334,58 +383,73 @@ def show_menu(opt):
         vtemp = ""
         if len(filtered_data) == 1:
             vtemp = f"(Id: {filtered_data[0]['Text#']}, Author: {filtered_data[0]['Authors']}, Title: {filtered_data[0]['Title']}, lang:{filtered_data[0]['Language']})"
-            vtemp = wrap_string_atpos(vtemp,"| ", 56)
+            vtemp = wrap_string_atpos(vtemp, "| ", 56)
         string_conditions = f"Conditions: {get_conditions_pretty(cond_total)}"
-        string_conditions = wrap_string_atpos(string_conditions,"| ", 58)
-            
-        print(MENU_OPTIONS_TEMPLATE.format(search_conditions = string_conditions, books_found=len(filtered_data), unique_book_val=vtemp))
+        string_conditions = wrap_string_atpos(string_conditions, "| ", 58)
+
+        print(
+            MENU_OPTIONS_TEMPLATE.format(
+                search_conditions=string_conditions,
+                books_found=len(filtered_data),
+                unique_book_val=vtemp,
+            )
+        )
         opt_menu = input('| Select a option (press "q" to return to the main menu)?\n')
         opt_menu = opt_menu.lower()
 
-        if opt_menu == "1": #any field
+        if opt_menu == "1":  # any field
             cond_val = {"Authors": ""}, {"Title": ""}, {"OPERATOR": "or"}
-            query_field("---Enter the author or title to search?\n", cond_val, True, True)
+            query_field(
+                "---Enter the author or title to search?\n", cond_val, True, True
+            )
 
-        elif opt_menu == "2": #Search a ID
+        elif opt_menu == "2":  # Search a ID
             cond_val = {"Text#": ""}, {"OPERATOR": "or"}
             query_field("---Enter the ID to search?\n", cond_val, True, False)
-    
-        elif opt_menu =="3": #Add a author condition
+
+        elif opt_menu == "3":  # Add a author condition
             if len(filtered_data) <= 1:
                 pause("Not applicable. It is not possible to filter further books")
             else:
                 cond_val = {"Authors": ""}, {"OPERATOR": "or"}
                 query_field("Enter the author to search?\n", cond_val, False, True)
 
-        elif opt_menu =="4": #Add a title condition
+        elif opt_menu == "4":  # Add a title condition
             if len(filtered_data) <= 1:
                 pause("Not applicable. It is not possible to filter further books")
             else:
                 cond_val = {"Title": ""}, {"OPERATOR": "or"}
                 query_field("Enter the title to search?\n", cond_val, False, True)
 
-        elif opt_menu =="5": #Add a language condition
+        elif opt_menu == "5":  # Add a language condition
             if len(filtered_data) <= 1:
                 pause("Not applicable. It is not possible to filter further books")
             else:
                 cond_val = {"Language": ""}, {"OPERATOR": "or"}
-                query_field("Enter the language to filter (en/es/fr/it)?\n", cond_val, False, True)
+                query_field(
+                    "Enter the language to filter (en/es/fr/it)?\n",
+                    cond_val,
+                    False,
+                    True,
+                )
 
-        elif opt_menu =="6": # Reset all the conditions
-            filtered_data = catalog_data #Reset all the conditions and use as input all the data of the catalog
+        elif opt_menu == "6":  # Reset all the conditions
+            filtered_data = catalog_data  # Reset all the conditions and use as input all the data of the catalog
             cond_total = []
             pause("All conditions reseted...")
 
-        elif opt_menu =="7": # Show results of filtered_data
-            if (len(cond_total)>0):
+        elif opt_menu == "7":  # Show results of filtered_data
+            if len(cond_total) > 0:
                 print_data(filtered_data)
                 pause()
             else:
                 pause("First select some conditions to show some result")
 
-        elif opt_menu == "8": # Send a ebook if there is 1 book selected
+        elif opt_menu == "8":  # Send a ebook if there is 1 book selected
             if len(filtered_data) != 1:
-                pause("Not applicable. You must select only one book in order to send it.")
+                pause(
+                    "Not applicable. You must select only one book in order to send it."
+                )
             else:
                 email_to = input("Enter the email address of the destiny?\n")
                 email_to = email_to.strip()
@@ -394,16 +458,17 @@ def show_menu(opt):
                 else:
                     pause(f"Error: Invalid email address: {email_to}")
 
-        elif opt_menu =="9": # Show statistics of request saved in the worksheet
+        elif opt_menu == "9":  # Show statistics of request saved in the worksheet
             show_request_statistics()
 
-        elif opt_menu =="q": # Exit
+        elif opt_menu == "q":  # Exit
             break
 
         else:
             if opt_menu != "":
                 pause(f'Error: Unknown option selected "{opt_menu}"')
-        
+
+
 def main():
     """
     Main function
@@ -413,25 +478,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-#data = catalog.get_all_records()
-#data = get_all_records(catalog)
-#print(f"{len(data)} records found...")
-##get_all_values()[1]
-
-
-
-#print(data[0])
-#data = get_filter_data(data, [{"Authors": "Jefferson"}, {"Authors": "Thomas"}, {"Language": "en"}, {"Type": "Text"}])
-#print(len(data))
-#print_data(data)
-
-#url_ebook = get_epub_url(data, 62187)
-#if url_ebook:
-#    print(url_ebook)
-#    ebook_local = download_ebook(62187)
-#    if ebook_local:
-#        #Send a email with the ebook
-#        os.remove(ebook_local)
-#        pass
-
