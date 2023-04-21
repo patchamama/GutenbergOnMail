@@ -225,22 +225,52 @@ def show_request_statistics():
             (1) if not vid in cant_books_req else cant_books_req[vid] + 1
         )
 
-    print(
-        "\n{:5s} | {:5s} | {:30s} | {:30s} | {:4s}".format(
-            "Id", "Count", "Author", "Title", "Lang"
-        )
-    )
+    count_author_books = {}
+    count_author_requests = {}
+
 
     # Sort the requests for the number of request desc
     cant_books_req = sorted(cant_books_req.items(), key = lambda x:x[1], reverse = True)
-
-    print("".ljust(86, "-"))
+    print("\nNumber of requests per book")
+    print("".ljust(80, "-"))
+    print(
+        "{:5s} | {:5s} | {:20s} | {:30s} | {:4s}".format(
+            "Id", "Count", "Author", "Title", "Lang"
+        )
+    )
+    print("".ljust(80, "-"))
     for val_books in cant_books_req:
         no_book = val_books[0]
-        count_book = val_books[1]
+        count_books = val_books[1]
         vaut, vtit, vlang = get_info_from_data(no_book)
         print(
-            f"{no_book:5d} | {count_book:5d} | {vaut[:30]:30s} | {vtit[:30]:30s} | {vlang:4s}"
+            f"{no_book:5d} | {count_books:5d} | {vaut[:20]:20s} | {vtit[:30]:30s} | {vlang:4s}"
+        )
+        count_author_requests[vaut] = (count_books) if not vaut in count_author_requests else count_author_requests[vaut] + count_books
+        count_author_books[vaut] = (1) if not vaut in count_author_books else count_author_books[vaut] + 1
+    
+    print("\nNumber of requests per author")
+    print("".ljust(80, "-"))
+    print("{:50s} | {:5s}".format("Author", "Requests"))
+    print("".ljust(80, "-"))
+    count_author_requests = sorted(count_author_requests.items(), key = lambda x:x[1], reverse = True)
+    for val_books in count_author_requests:
+        author_name = val_books[0]
+        count_books = val_books[1]
+        print(
+            f"{author_name[:50]:50s} | {count_books:5d}"
+        )
+
+    print("\nNumber of books per author")
+    print("".ljust(80, "-"))
+    print("{:50s} | {:5s}".format("Author", "Books"))
+    print("".ljust(80, "-"))
+    count_author_books = sorted(count_author_books.items(), key = lambda x:x[1], reverse = True)
+    for val_books in count_author_books:
+        author_name = val_books[0]
+        count_books = val_books[1]
+        print(
+            f"{author_name[:50]:50s} | {count_books:5d}"
         )
     pause()
 
