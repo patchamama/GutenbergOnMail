@@ -304,9 +304,7 @@ def show_menu(opt):
                 filtered_data = catalog_data #Reset all the conditions and use as input all the data of the catalog
                 cond_total = []
                 pause("All conditions reseted...")
-            elif opt_menu =="7": #Execute query with conditions
-                print_data(filtered_data)
-                pause()
+            elif opt_menu =="7": #Show results > filtered_data
                 if (len(cond_total)>0):
                     print_data(filtered_data)
                     pause()
