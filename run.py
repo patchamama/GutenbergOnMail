@@ -11,7 +11,7 @@ MENU_OPTIONS_TEMPLATE = """
 | {search_conditions}
 | Books: {books_found} 
 | {unique_book_val}
-|----- One condition (simple + Conditions reset) --------
+|----- One condition (+ Conditions reset) ---------------
 |      1. Search in any field (author or title)
 |      2. Search a book for ID-Number
 |----- Multiple conditions (<AND> operator) -------------
@@ -40,7 +40,9 @@ SHEET = GSPREAD_CLIENT.open('GutenbergOnMail')
 print("Opening catalog data...")
 catalog = SHEET.worksheet('pg_catalog')
 catalog_data = []  # All data to work (of the sheet)
+filtered_data = []  # Result of data after filter ON
 catalog_index = [] # Index to access directly to every element of the catalog {id} > {Text#}
+cond_total = [] # All the conditions defined (filter)
 
 def get_filter_data(data, filter=[], and_cond=True):
     """
@@ -285,13 +287,52 @@ def wrap_string_atpos(st, initstring, atpos):
     endstring += st if len(endstring)==0 else "\n"+st  
     return endstring
     
+def query_field(prompt, conditions, reset_filter= False, input_as_string = True):
+    global catalog_data
+    global cond_total
+    global filtered_data
+
+    search_cond = input(prompt)
+    if input_as_string:
+        search_cond = clean_search(search_cond)
+    else:
+        try:
+            test = int(search_cond)
+        except ValueError:
+            pause("Error: the value is not a number, please enter a number integer to search...")
+            return
+
+    if len(search_cond) > 0:
+        if reset_filter:
+            filtered_data = catalog_data #Reset all the conditions and use as input all the data of the catalog
+            cond_total.clear()
+        list_words_search = search_cond.split()
+        for word in list_words_search:
+            partial_cond = conditions
+            for cond_val in partial_cond:
+                for vcond, vval in cond_val.items():
+                    if cond_val != "OPERATOR":
+                        if input_as_string:
+                            cond_val[vcond] = word
+                        else: 
+                            cond_val[vcond] = int(word)
+
+                cond_total.append(partial_cond)
+                filtered_data = get_filter_data(filtered_data, list(partial_cond))
+        if (len(filtered_data) == 0):
+            pause(f"No data found with the conditions: {search_cond}")
+        else:
+            print_data(filtered_data)
+            pause()
 
 def show_menu(opt):
     """
-    Show submenus and/or do actions of the menus selected
+    Show Main Menu
     """
     global catalog_data
-    cond_total = []
+    global cond_total
+    global filtered_data
+
     catalog_data = get_all_records(catalog)
     filtered_data = catalog_data
 
@@ -306,107 +347,49 @@ def show_menu(opt):
             
         print(MENU_OPTIONS_TEMPLATE.format(search_conditions = string_conditions, books_found=len(filtered_data), unique_book_val=vtemp))
         opt_menu = input('| Select a option (press "q" to return to the main menu)?\n')
+        opt_menu = opt_menu.lower()
+
         if opt_menu == "1": #any field
-            search_cond = input("Enter the author or title to search?\n")
-            search_cond = clean_search(search_cond)
-            if len(search_cond) > 0:
-                filtered_data = catalog_data #Reset all the conditions and use as input all the data of the catalog
-                cond_total.clear()
-                list_words_search = search_cond.split()
-                for word in list_words_search:
-                    cond_val = {"Authors": word}, {"Title": word}, {"OPERATOR": "or"}
-                    cond_total.append(cond_val)
-                    filtered_data = get_filter_data(filtered_data, list(cond_val))
-                if (len(filtered_data) == 0):
-                    pause(f"No data found with title or author={search_cond}")
-                else:
-                    print_data(filtered_data)
-                    pause()
+            cond_val = {"Authors": ""}, {"Title": ""}, {"OPERATOR": "or"}
+            query_field("---Enter the author or title to search?\n", cond_val, True, True)
+
         elif opt_menu == "2": #Search a ID
-            search_cond = input("Enter the ID to search?\n") 
-            search_cond = clean_search(search_cond)
-            try:
-                Id = int(search_cond)
-            except ValueError:
-                pause("Error: the ID is not a number, please enter a number integer to search...")
-                continue
-            if len(search_cond) > 0:
-                filtered_data = catalog_data #Reset all the conditions and use as input all the data of the catalog
-                cond_total.clear()
-                cond_val = {"Text#": Id}, {"OPERATOR": "or"}
-                cond_total.append(cond_val)
-                filtered_data = get_filter_data(filtered_data, list(cond_val))
-                if (len(filtered_data)==0):
-                    pause(f"No data found with ID={Id}")
-                else:
-                    print_data(filtered_data)
-                    pause()
+            cond_val = {"Text#": ""}, {"OPERATOR": "or"}
+            query_field("---Enter the ID to search?\n", cond_val, True, False)
+    
         elif opt_menu =="3": #Add a author condition
             if len(filtered_data) <= 1:
                 pause("Not applicable. It is not possible to filter further books")
             else:
-                search_cond = input("Enter the author to search?\n")
-                search_cond = clean_search(search_cond)
-                if len(search_cond) > 0:
-                    list_words_search = search_cond.split()
-                    for word in list_words_search:
-                        cond_val = {"Authors": word}, {"OPERATOR": "or"}
-                        cond_total.append(cond_val)
-                        filtered_data = get_filter_data(filtered_data, list(cond_val))
-                    if (len(filtered_data) == 0):
-                        pause(f"No data found with conditions: {cond_total}")
-                    else:
-                        print_data(filtered_data)
-                        pause()
+                cond_val = {"Authors": ""}, {"OPERATOR": "or"}
+                query_field("Enter the author to search?\n", cond_val, False, True)
 
         elif opt_menu =="4": #Add a title condition
             if len(filtered_data) <= 1:
                 pause("Not applicable. It is not possible to filter further books")
             else:
-                search_cond = input("Enter the title to search?\n")
-                search_cond = clean_search(search_cond)
-                if len(search_cond) > 0:
-                    list_words_search = search_cond.split()
-                    for word in list_words_search:
-                        cond_val = {"Title": word}, {"OPERATOR": "or"}
-                        cond_total.append(cond_val)
-                        filtered_data = get_filter_data(filtered_data, list(cond_val))
-                    if (len(filtered_data) == 0):
-                        pause(f"No data found with conditions: {cond_total}")
-                    else:
-                        print_data(filtered_data)
-                        pause()
+                cond_val = {"Title": ""}, {"OPERATOR": "or"}
+                query_field("Enter the title to search?\n", cond_val, False, True))
+
         elif opt_menu =="5": #Add a language condition
             if len(filtered_data) <= 1:
                 pause("Not applicable. It is not possible to filter further books")
             else:
-                search_cond = input("Enter the language to filter (en/es/fr/it)?\n")
-                search_cond = clean_search(search_cond)
-                if len(search_cond) > 0:
-                    if " " in search_cond:
-                        pause("Error: please type only one word. Example: en (to english)")
-                        continue
-                    cond_val = {"Language": search_cond}, {"OPERATOR": "or"}
-                    cond_total.append(cond_val)
-                    filtered_data = get_filter_data(filtered_data, list(cond_val))
-                    if (len(filtered_data) == 0):
-                        pause(f"No data found with conditions: {search_cond}")
-                    else:
-                        print_data(filtered_data)
-                        pause()
-        #elif opt_menu =="6": #Switch operator <or> / <and> 
-        #    and_operator = not and_operator
-        #    pause(f"Operator changed to <{'and' if (and_operator) else 'or'}>...")           
-        elif opt_menu =="6": #Reset all the conditions
+                cond_val = {"Language": ""}, {"OPERATOR": "or"}
+                query_field("Enter the language to filter (en/es/fr/it)?\n", cond_val, False, True))
+
+        elif opt_menu =="6": # Reset all the conditions
             filtered_data = catalog_data #Reset all the conditions and use as input all the data of the catalog
             cond_total = []
             pause("All conditions reseted...")
-        elif opt_menu =="7": #Show results > filtered_data
+
+        elif opt_menu =="7": # Show results of filtered_data
             if (len(cond_total)>0):
                 print_data(filtered_data)
                 pause()
             else:
                 pause("First select some conditions to show some result")
+
         elif opt_menu == "8": # Send a ebook if there is 1 book selected
             if len(filtered_data) != 1:
                 pause("Not applicable. You must select only one book in order to send it.")
@@ -417,10 +400,13 @@ def show_menu(opt):
                     send_ebook_mailto(email_to, filtered_data[0]["Text#"])
                 else:
                     pause(f"Error: Invalid email address: {email_to}")
+
         elif opt_menu =="9": # Show statistics of request saved in the worksheet
             show_request_statistics()
+
         elif opt_menu =="q": # Exit
             break
+
         else:
             if opt_menu != "":
                 pause(f'Error: Unknown option selected "{opt_menu}"')
