@@ -5,6 +5,7 @@ import os
 import urllib.request
 import re
 from datetime import date
+from copy import deepcopy
 
 MENU_OPTIONS_TEMPLATE = """ 
 |--------------------------------------------------------
@@ -308,7 +309,7 @@ def query_field(prompt, conditions, reset_filter= False, input_as_string = True)
             cond_total.clear()
         list_words_search = search_cond.split()
         for word in list_words_search:
-            partial_cond = conditions
+            partial_cond = deepcopy(conditions)
             for cond_val in partial_cond:
                 for vcond, vval in cond_val.items():
                     if cond_val != "OPERATOR":
@@ -316,9 +317,8 @@ def query_field(prompt, conditions, reset_filter= False, input_as_string = True)
                             cond_val[vcond] = word
                         else: 
                             cond_val[vcond] = int(word)
-
-                cond_total.append(partial_cond)
-                filtered_data = get_filter_data(filtered_data, list(partial_cond))
+            cond_total.append(partial_cond)
+            filtered_data = get_filter_data(filtered_data, list(partial_cond))
         if (len(filtered_data) == 0):
             pause(f"No data found with the conditions: {search_cond}")
         else:
@@ -369,14 +369,14 @@ def show_menu(opt):
                 pause("Not applicable. It is not possible to filter further books")
             else:
                 cond_val = {"Title": ""}, {"OPERATOR": "or"}
-                query_field("Enter the title to search?\n", cond_val, False, True))
+                query_field("Enter the title to search?\n", cond_val, False, True)
 
         elif opt_menu =="5": #Add a language condition
             if len(filtered_data) <= 1:
                 pause("Not applicable. It is not possible to filter further books")
             else:
                 cond_val = {"Language": ""}, {"OPERATOR": "or"}
-                query_field("Enter the language to filter (en/es/fr/it)?\n", cond_val, False, True))
+                query_field("Enter the language to filter (en/es/fr/it)?\n", cond_val, False, True)
 
         elif opt_menu =="6": # Reset all the conditions
             filtered_data = catalog_data #Reset all the conditions and use as input all the data of the catalog
