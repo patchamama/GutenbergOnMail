@@ -173,7 +173,7 @@ def show_request_statistics():
     """ 
     requests_worksheet = SHEET.worksheet('requests')
     requests_vals = requests_worksheet.get_all_records()
-    #print(requests_vals)
+    print(requests_vals)
 
     #if (len(catalog_data) == 0):
     #    catalog_data = get_all_records(catalog)
@@ -203,6 +203,7 @@ def send_ebook_mailto(email_address, ebook_id):
     update_request_ebook_fname("requests", ebook_id, "terminal")
 
     #os.remove(ebook_fname)
+    # TODO: send to actual email later... 
 
 
 def clean_search(search_string):
@@ -247,15 +248,16 @@ def show_menu(opt):
     """
     global catalog_data
     cond_total = []
-    filtered_data = []
-    and_operator = True
+    filtered_data = catalog_data
+    #and_operator = True
     while True:
         if opt=="1": #Search a book > filters
             if (len(catalog_data) == 0):
                 catalog_data = get_all_records(catalog)
                 filtered_data = catalog_data
             clear_terminal()
-            print('|====== MAIN > SEARCH A BOOK (FILTER) ===================')
+            print('| > Main menu > Search a book (filter)')
+            print('|'+''.ljust(80, '-'))
             if len(cond_total) > 0:
                 print(f"|  Conditions: { get_conditions_pretty(cond_total) }")
                 if len(filtered_data) == 1:
@@ -268,20 +270,16 @@ def show_menu(opt):
             print( '|----- One condition (simple + Conditions reset) --------')
             print( '|      1. Search in any field (author or title)')
             print( '|      2. Search a book for ID-Number')
-            if len(filtered_data) > 1: #Only use filter if there is more than 1 record/book found or not filters
-                print( '|----- Multiple conditions (<AND> operator) -------------')
-                print( '|      3. Add a author condition')
-                print( '|      4. Add a title condition')
-                print( '|      5. Add a language condition')
+            print( '|----- Multiple conditions (<AND> operator) -------------')
+            print( '|      3. Add a author condition')
+            print( '|      4. Add a title condition')
+            print( '|      5. Add a language condition')
             print( '|--------------------------------------------------------')
-            #if len(filtered_data) > 1: #Option to new version with many levels of conditions
-            #    print(f'|      6. Change operator to <{"OR" if (and_operator) else "AND"}>')
             print( '|      6. Reset conditions')
             print( '|      7. Show results')
             print( '|--------------------------------------------------------')
-            print( '|      8. Return to the main menu')
-            if (len(filtered_data)==1):
-                print( '|      9. Send the ebook to email')
+            print( '|      8. Send an ebook to email')
+            print( '|      9. Return to the main menu')
             print( '|--------------------------------------------------------')
             opt_menu = input('| Select a option (press "q" to return to the main menu)?\n')
             if opt_menu == "1": #any field
@@ -320,48 +318,58 @@ def show_menu(opt):
                         print_data(filtered_data)
                         pause()
             elif opt_menu =="3": #Add a author condition
-                search_cond = input("Enter the author to search?\n")
-                search_cond = clean_search(search_cond)
-                if len(search_cond) > 0:
-                    list_words_search = search_cond.split()
-                    for word in list_words_search:
-                        cond_val = {"Authors": word}, {"OPERATOR": "or"}
-                        cond_total.append(cond_val)
-                        filtered_data = get_filter_data(filtered_data, list(cond_val))
-                    if (len(filtered_data) == 0):
-                        pause(f"No data found with conditions: {cond_total}")
-                    else:
-                        print_data(filtered_data)
-                        pause()
+                if len(filtered_data) <= 1:
+                    pause("Not applicable. It is not possible to filter further books")
+                else:
+                    search_cond = input("Enter the author to search?\n")
+                    search_cond = clean_search(search_cond)
+                    if len(search_cond) > 0:
+                        list_words_search = search_cond.split()
+                        for word in list_words_search:
+                            cond_val = {"Authors": word}, {"OPERATOR": "or"}
+                            cond_total.append(cond_val)
+                            filtered_data = get_filter_data(filtered_data, list(cond_val))
+                        if (len(filtered_data) == 0):
+                            pause(f"No data found with conditions: {cond_total}")
+                        else:
+                            print_data(filtered_data)
+                            pause()
+
             elif opt_menu =="4": #Add a title condition
-                search_cond = input("Enter the title to search?\n")
-                search_cond = clean_search(search_cond)
-                if len(search_cond) > 0:
-                    list_words_search = search_cond.split()
-                    for word in list_words_search:
-                        cond_val = {"Title": word}, {"OPERATOR": "or"}
+                if len(filtered_data) <= 1:
+                    pause("Not applicable. It is not possible to filter further books")
+                else:
+                    search_cond = input("Enter the title to search?\n")
+                    search_cond = clean_search(search_cond)
+                    if len(search_cond) > 0:
+                        list_words_search = search_cond.split()
+                        for word in list_words_search:
+                            cond_val = {"Title": word}, {"OPERATOR": "or"}
+                            cond_total.append(cond_val)
+                            filtered_data = get_filter_data(filtered_data, list(cond_val))
+                        if (len(filtered_data) == 0):
+                            pause(f"No data found with conditions: {cond_total}")
+                        else:
+                            print_data(filtered_data)
+                            pause()
+            elif opt_menu =="5": #Add a language condition
+                if len(filtered_data) <= 1:
+                    pause("Not applicable. It is not possible to filter further books")
+                else:
+                    search_cond = input("Enter the language to filter (en/es/fr/it)?\n")
+                    search_cond = clean_search(search_cond)
+                    if len(search_cond) > 0:
+                        if " " in search_cond:
+                            pause("Error: please type only one word. Example: en (to english)")
+                            continue
+                        cond_val = {"Language": search_cond}, {"OPERATOR": "or"}
                         cond_total.append(cond_val)
                         filtered_data = get_filter_data(filtered_data, list(cond_val))
-                    if (len(filtered_data) == 0):
-                        pause(f"No data found with conditions: {cond_total}")
-                    else:
-                        print_data(filtered_data)
-                        pause()
-            elif opt_menu =="5": #Add a language condition
-                search_cond = input("Enter the language to filter (en/es/fr/it)?\n")
-                search_cond = clean_search(search_cond)
-                if len(search_cond) > 0:
-                    if " " in search_cond:
-                        pause("Error: please type only one word. Example: en (to english)")
-                        continue
-                    cond_val = {"Language": search_cond}, {"OPERATOR": "or"}
-                    cond_total.append(cond_val)
-                    filtered_data = get_filter_data(filtered_data, list(cond_val))
-                    if (len(filtered_data) == 0):
-                        pause(f"No data found with conditions: {search_cond}")
-                    else:
-                        print_data(filtered_data)
-                        pause()
+                        if (len(filtered_data) == 0):
+                            pause(f"No data found with conditions: {search_cond}")
+                        else:
+                            print_data(filtered_data)
+                            pause()
             #elif opt_menu =="6": #Switch operator <or> / <and> 
             #    and_operator = not and_operator
             #    pause(f"Operator changed to <{'and' if (and_operator) else 'or'}>...")           
@@ -375,13 +383,17 @@ def show_menu(opt):
                     pause()
                 else:
                     pause("First select some conditions to show some result")
-            elif opt_menu =="8" or opt_menu =="q": #Return to the main menu
+            elif opt_menu == "8": # Send a ebook if there is 1 book selected
+                if len(filtered_data) != 1:
+                    pause("Not applicable. You must select only one book in order to send it.")
+                else:
+                    opt = "2"
+            elif opt_menu =="9" or opt_menu =="q": #Return to the main menu
                 break
-            elif (len(filtered_data)==1) and (opt_menu =="9"): # Send a ebook if there is 1 book selected
-                opt="2"
             else:
                 if opt_menu != "":
                     pause(f'Error: Unknown option selected "{opt_menu}"')
+            
         elif opt=="2": #Send ebook to mail
             if (len(filtered_data)==1):
                 email_to = input("Enter the email address of the destiny?\n")
@@ -413,18 +425,13 @@ def prompt_options():
     while True:
         clear_terminal()
         print('Vers. 0.16')
-        print('|====== MAIN '+''.ljust(67, '='))
-        print(''.ljust(80, '-'))
-        print('| python3 run.py [filter <condition>] [getebook <ID_Number> <email@domain>] [stat_request]')
-        print('|    Examples:')
-        print('|      python3 run.py filter "Thomas Jefferson"')
-        print('|      python3 run.py getebook 62187 me@example.com')
-        print('|      python3 run.py stat_request')
+        print('| > Main menu ')
         print(''.ljust(80, '-'))
         print('| Options:')
-        print('|      1. Search a book (filter)')
+        print('|      1. Search a ebook and send it to email')
         print('|      2. Send ebook to mail')
-        print('|      3. See Statistics of request')
+        print('|      3. See Statistics of requests')
+        print(''.ljust(80, '-'))
         option_sel = input('| Select a option (press "q" to exit)?\n')
         option_sel = option_sel.strip()
         if option_sel.lower() =="q":
@@ -439,7 +446,9 @@ def main():
     """
     prompt_options()
 
-main()
+
+if __name__ == "__main__":
+    main()
 
 #data = catalog.get_all_records()
 #data = get_all_records(catalog)
