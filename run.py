@@ -24,8 +24,7 @@ MENU_OPTIONS_TEMPLATE = """
 |--------------------------------------------------------
 |      8. Send an ebook (epub) to email
 |      9. See Statistics of requests
-|--------------------------------------------------------
-"""
+|--------------------------------------------------------"""
 
 SCOPE = [
     "https://www.googleapis.com/auth/spreadsheets",
