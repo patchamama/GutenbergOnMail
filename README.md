@@ -42,11 +42,12 @@ If one of the first two options is chosen, the previously set conditions are aut
 
 ### Multiple conditions
 
-Several options are provided to add more conditions or filters in the searches related to the fields: title, author and language. Several conditions can be added for each of these fields, even if a condition has already been set in option 1 above.
+ Several options are provided to add more conditions or filters in the searches related to the fields: title, author and language. Several conditions can be added for each of these fields, even if a condition has already been set in option 1 above.
 
-### Result or reset options
 
-Once all the filters have been completed, 4 options can be chosen. 
+### Result or reset options
+
+ Once all the filters have been completed, 4 options can be chosen. 
 
   - An option is provided to remove all conditions to choose a new book or to display the results of the books filtered according to the specified conditions.
   - It is possible to display the results after filtering the data according to the conditions that have been defined.
@@ -66,7 +67,6 @@ The following tests have been performed:
   - Direct input of different data in the different options (alphanumeric values, numbers, symbols).
   - The code has been tested in the Herocu app of the code institute https://pep8ci.herokuapp.com/
   
-
 
 ## Bugs
 
