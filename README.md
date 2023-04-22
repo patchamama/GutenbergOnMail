@@ -80,6 +80,20 @@ No additional errors have been detected
 
 ## Deployment
 
+The project has been deployed using the terminal of Heroku. The Steps for deployment are:
+  - Fork or clone this repository
+  - Sign up in [Google Cloud Platform] (https://console.cloud.google.com/) to get the access key (credentials) to google spreadsheed api (https://docs.gspread.org/en/latest/oauth2.html)
+  - Create a spreadsheet in google docs and import the csv file from project Gutenberg with all the catalogue that can be downloaded here: https://www.gutenberg.org/cache/epub/feeds/pg_catalog.csv
+  - Click the share spreadsheet button and add the generated user in google credentials (email account provided with parameters)
+  - Log in to [Heroku](https://heroku.com)
+  - Create a new app (on the dashboard > right menu "New" > Create new app > Enter the data )
+  - Set the buildbacks to Python and NodeJS in this order
+  - Connect the Heroku app to your repository (github) (Deploy tab)
+  - Deploy Branch" option > View
 
 ## Credits 
 
+  - Code Institute por las guías de estudio brindadas, ejemplos (acceso a api de google) y el acceso al CI Python Linter (https://pep8ci.herokuapp.com/)
+  - Proyecto Gutenberg por el acceso a la base de datos y los libros: https://www.gutenberg.org
+  - Limpiar la terminal Idea: https://stackoverflow.com/questions/2084508/clear-terminal-in-python
+  - Ideas sobre cómo validar mejor una dirección de correo electrónico: https://stackoverflow.com/questions/69412522/what-is-the-best-way-to-verify-an-email-address-if-it-actually-exist
