@@ -93,7 +93,7 @@ The project has been deployed using the terminal of Heroku. The Steps for deploy
 
 ## Credits 
 
-  - Code Institute por las guías de estudio brindadas, ejemplos (acceso a api de google) y el acceso al CI Python Linter (https://pep8ci.herokuapp.com/)
-  - Proyecto Gutenberg por el acceso a la base de datos y los libros: https://www.gutenberg.org
-  - Limpiar la terminal Idea: https://stackoverflow.com/questions/2084508/clear-terminal-in-python
-  - Ideas sobre cómo validar mejor una dirección de correo electrónico: https://stackoverflow.com/questions/69412522/what-is-the-best-way-to-verify-an-email-address-if-it-actually-exist
+  - Code Institute for the provided study guides, examples (access to google api) and access to the CI Python Linter (https://pep8ci.herokuapp.com/)
+  - Project Gutenberg for access to the database and books: https://www.gutenberg.org
+  - Clear the terminal Idea: https://stackoverflow.com/questions/2084508/clear-terminal-in-python
+  - Ideas about how to validate better an email address: https://stackoverflow.com/questions/69412522/what-is-the-best-way-to-verify-an-email-address-if-it-actually-exist
