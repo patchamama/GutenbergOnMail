@@ -8,7 +8,7 @@ As a good lover of reading and books, I wanted to program something related to t
 
 Even though more than a decade has passed since then. These technologies that facilitate reading and access to books are still not accessible to everyone on the planet. Although more and more people have access to smartphones with larger screens or low-cost computers such as the [One Laptop Per Child project] (https://laptop.org/) or the Raspberry Pi, internet access is still limited or slow in many areas, or restricted and censored (as happened to me for 30 years while I lived in Cuba where I only had access to email). 
 
-This script aims to provide the first steps to facilitate the use of a tool to allow email access to e-books that do not have legal copyright issues. Therefore I have chosen the catalogs of books from [project Gutenberg] (https://www.gutenberg.org/) that is a library of over 70,000 free eBook.
+This script aims to provide the first steps to facilitate the use of a tool to allow email access to e-books that do not have legal copyright issues. Therefore I have chosen the catalogs of books from [project Gutenberg] (https://www.gutenberg.org/) which is a library of over 70,000 free eBooks.
 
 [Here is the demo version of my project, accessible from Heroku](https://gutenberg-on-mail.herokuapp.com/)
 ![Application example](https://github.com/patchamama/PP3-GutenbergOnMail/blob/main/doc/PP3-screenshot.png)
@@ -20,7 +20,7 @@ The program aims to develop a tool that allows interaction from the terminal wit
 ## Features
 
 
-We have chosen from the book catalog the data fields that best facilitate searches by the most referenced fields: Text# (Id), Author, title and language.
+We have chosen from the book catalog the data fields that best facilitate searches by the most referenced fields: Text# (Id), Author, title, and language.
 
 ### One condition
 
@@ -56,7 +56,7 @@ If one of the first two options is chosen, the previously set conditions are aut
 
 ### Features Left to Implement
 
-  - Integrate the application with some API (like Google API) for sending emails and thus add the possibility of sending ebooks by this way.
+  - Integrate the application with some API (like Google API) for sending emails and thus add the possibility of sending ebooks in this way.
   - Process book requests by email (the application could access requests for book queries or specific book shipments).
   - Allow interaction with the script directly through the command line. Example: `python3 run.py [getebook Number]`. 
 
@@ -82,7 +82,7 @@ No additional errors have been detected
 
 The project has been deployed using the terminal of Heroku. The Steps for deployment are:
   - Fork or clone this repository
-  - Sign up in [Google Cloud Platform] (https://console.cloud.google.com/) to get the access key (credentials) to google spreadsheets API (https://docs.gspread.org/en/latest/oauth2.html)
+  - Sign up in [Google Cloud Platform] (https://console.cloud.google.com/) to get the access key (credentials) to Google Spreadsheets API (https://docs.gspread.org/en/latest/oauth2.html)
   - Create a spreadsheet in Google Docs and import the CSV file from Project Gutenberg with all the catalogs that can be downloaded here: https://www.gutenberg.org/cache/epub/feeds/pg_catalog.csv
   - Click the share spreadsheet button and add the generated user in Google credentials (email account provided with parameters)
   - Log in to [Heroku](https://heroku.com)
